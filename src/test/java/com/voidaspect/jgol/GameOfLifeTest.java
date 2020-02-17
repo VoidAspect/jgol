@@ -47,9 +47,11 @@ class GameOfLifeTest {
     }
 
     @Test
-    void shouldProgressOnLargeEmptyGrid_InLessThan1Second() {
+    void shouldProgressOnLargeEmptyGrid() {
         int side = 20_000;
         var game = new GameOfLife(side, side);
+        assertEquals(400, game.getChunks());
+        assertTrue(game.isParallel());
         assertTimeout(Duration.ofSeconds(1), game::progress);
     }
 
@@ -58,6 +60,7 @@ class GameOfLifeTest {
         int side = 10000;
         int edge = side - 1;
         var game = new GameOfLife(side, side);
+        assertEquals(100, game.getChunks());
         boolean[][] expected = new boolean[side][side];
         assertArrayEquals(expected, game.snapshot());
         // init loads of overcrowded cells - they should die off

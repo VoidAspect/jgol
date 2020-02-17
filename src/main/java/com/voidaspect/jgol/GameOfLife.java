@@ -1,9 +1,17 @@
 package com.voidaspect.jgol;
 
+import com.voidaspect.jgol.config.GameOfLifeConfig;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Conway's Game of Life - stateful cellular automaton governed by following rules:
@@ -32,15 +40,6 @@ public final class GameOfLife {
     private static final int LOWER_BOUND = 1;
 
     /**
-     * If we have more than 1 million cells - progress calculation will be executed in parallel
-     */
-    private static final int PARALLEL_PROGRESSION_THRESHOLD = 1_000_000;
-
-    private static final int CHUNK_SIDE_SIZE = 1000;
-
-    private static final int CHUNK_SIZE = CHUNK_SIDE_SIZE * CHUNK_SIDE_SIZE;
-
-    /**
      * Game of life grid - each cell can have one of two states: false = dead, true = alive
      */
     private final boolean[][] grid;
@@ -55,6 +54,8 @@ public final class GameOfLife {
      */
     private final int columns;
 
+    private final long size;
+
     /**
      * Final index for iterating over rows, exclusive
      */
@@ -65,61 +66,119 @@ public final class GameOfLife {
      */
     private final int upperColBound;
 
-    private final boolean parallel;
+    private final int chunkWidth;
 
-    private final int rowChunkSize;
+    private final int chunkHeight;
 
-    private final int colChunkSize;
-
-    private final int chunkCount;
-
-    private final long size;
+    private final int chunks;
 
     private final ExecutorService progressPool;
 
+    private final boolean threadSafe;
+
+    private final boolean parallel;
+
+    private final ReadWriteLock gridLock;
+
+    private final ProgressStrategy ps;
+
     public GameOfLife(int rows, int columns) {
-        this(null, rows, columns);
+        this(new GameOfLifeConfig().setRows(rows).setColumns(columns));
     }
 
-    public GameOfLife(boolean[][] state, int rows, int columns) {
-        this.grid = buildGrid(state, rows, columns);
+    public GameOfLife(boolean[][] initialState, int rows, int columns) {
+        this(new GameOfLifeConfig().setRows(rows).setColumns(columns).setInitialState(initialState));
+    }
+
+    public GameOfLife(GameOfLifeConfig config) {
+        int rows = config.getRows();
+        int columns = config.getColumns();
+        grid = config.getInitialState()
+                .map(initial -> buildGrid(initial, rows, columns))
+                .orElseGet(() -> initGrid(rows, columns));
         this.rows = rows;
         this.columns = columns;
-        this.upperRowBound = rows + 1;
-        this.upperColBound = columns + 1;
-        this.size = (long) rows * columns;
-        this.parallel = size > PARALLEL_PROGRESSION_THRESHOLD;
+        upperRowBound = rows + 1;
+        upperColBound = columns + 1;
+        size = config.getSize();
+        ProgressStrategy ps;
+        parallel = config.isParallelExecutionSupported() && size > config.getParallelizationThreshold();
         if (parallel) {
-            int chunkCount = (int) (size / CHUNK_SIZE);
-            if (chunkCount * PARALLEL_PROGRESSION_THRESHOLD < size) {
-                chunkCount++;
-            }
-            this.chunkCount = chunkCount;
-            rowChunkSize = CHUNK_SIDE_SIZE;
-            colChunkSize = CHUNK_SIDE_SIZE;
-            progressPool = Executors.newWorkStealingPool(chunkCount);
+            chunkWidth = config.getChunkWidth();
+            chunkHeight = config.getChunkHeight();
+            this.chunks = config.getChunks();
+            progressPool = config.getProgressExecutor()
+                    .orElseGet(() -> Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+            ps = new ParallelProgressStrategy();
         } else {
-            rowChunkSize = rows;
-            colChunkSize = columns;
+            chunkWidth = rows;
+            chunkHeight = columns;
+            chunks = 1;
             progressPool = null;
-            chunkCount = 1;
+            ps = new AllAtOnceProgressStrategy();
         }
+        threadSafe = config.isThreadSafe();
+        if (threadSafe) {
+            gridLock = new ReentrantReadWriteLock();
+            ps = new ThreadSafeProgressStrategy(ps);
+        } else {
+            gridLock = null;
+        }
+        this.ps = ps;
     }
 
     public void set(int row, int col, boolean state) {
         Objects.checkIndex(row, rows);
         Objects.checkIndex(col, columns);
-        grid[row + 1][col + 1] = state;
+        if (threadSafe) {
+            lockAndSet(row, col, state);
+        } else {
+            grid[row + 1][col + 1] = state;
+        }
+    }
+
+    private void lockAndSet(int row, int col, boolean state) {
+        var lock = gridLock.writeLock();
+        lock.lock();
+        try {
+            grid[row + 1][col + 1] = state;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean isAlive(int row, int col) {
         Objects.checkIndex(row, rows);
         Objects.checkIndex(col, columns);
-        return grid[row + 1][col + 1];
+        return threadSafe ? lockAndGet(row, col) : grid[row + 1][col + 1];
+    }
+
+    private boolean lockAndGet(int row, int col) {
+        var lock = gridLock.readLock();
+        lock.lock();
+        try {
+            return grid[row + 1][col + 1];
+        } finally {
+            lock.unlock();
+        }
     }
 
     public boolean[][] snapshot() {
         boolean[][] snapshot = new boolean[rows][];
+        return threadSafe ? lockAndCopyTo(snapshot) : copyTo(snapshot);
+    }
+
+    private boolean[][] lockAndCopyTo(boolean[][] snapshot) {
+        var lock = gridLock.readLock();
+        lock.lock();
+        try {
+            return copyTo(snapshot);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private boolean[][] copyTo(boolean[][] snapshot) {
         for (int i = 0, row = LOWER_BOUND; row < upperRowBound; row++) {
             snapshot[i++] = Arrays.copyOfRange(grid[row], LOWER_BOUND, upperColBound);
         }
@@ -127,78 +186,32 @@ public final class GameOfLife {
     }
 
     public void clear() {
-        // this row is used for padding, its values are always false
-        boolean[] empty = grid[0];
+        if (threadSafe) {
+            lockAndClean();
+        } else {
+            cleanInner();
+        }
+    }
+
+    private void lockAndClean() {
+        var lock = gridLock.writeLock();
+        lock.lock();
+        try {
+            cleanInner();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void cleanInner() {
         for (int i = LOWER_BOUND; i < upperRowBound; i++) {
             // rewrite this row with false
-            System.arraycopy(empty, LOWER_BOUND, grid[i], LOWER_BOUND, columns);
+            System.arraycopy(grid[0], LOWER_BOUND, grid[i], LOWER_BOUND, columns);
         }
     }
 
     public void progress() {
-        if (!parallel) {
-            var nextGen = progressChunk(LOWER_BOUND, LOWER_BOUND, upperRowBound, upperColBound);
-            nextGen.updateGrid();
-            return;
-        }
-        var progressTasks = new ArrayList<Callable<NextGen>>(chunkCount);
-        for (int row = LOWER_BOUND; row < upperRowBound; row += rowChunkSize) {
-            for (int col = LOWER_BOUND; col < upperColBound; col += colChunkSize) {
-                int fromRow = row, fromCol = col, toRow = fromRow + rowChunkSize, toCol = fromCol + colChunkSize;
-                progressTasks.add(() -> progressChunk(fromRow, fromCol, toRow, toCol));
-            }
-        }
-        try {
-            var gridUpdates = new ArrayList<Callable<Object>>(chunkCount);
-            for (var chunk : progressPool.invokeAll(progressTasks)) {
-                var chunkNextGen = chunk.get();
-                gridUpdates.add(Executors.callable(chunkNextGen::updateGrid));
-            }
-            for (var update : progressPool.invokeAll(gridUpdates)) {
-                update.get();
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private NextGen progressChunk(int fromRow, int fromCol, int toRow, int toCol) {
-        toRow = Math.min(upperRowBound, toRow);
-        toCol = Math.min(upperColBound, toCol);
-        var died = new CellBag();
-        var spawned = new CellBag();
-        for (int row = fromRow; row < toRow; row++) {
-            for (int col = fromCol; col < toCol; col++) {
-                int neighbors = neighbors(row, col);
-                // depending on whether the cell is alive
-                if (grid[row][col]) {
-                    // overcrowding or underpopulation
-                    if (neighbors < 2 || neighbors > 3) died.add(row, col);
-                } else {
-                    // reproduction
-                    if (neighbors == 3) spawned.add(row, col);
-                }
-            }
-        }
-        return new NextGen(spawned, died);
-    }
-
-    private int neighbors(int row, int col) {
-        //@formatter:off
-        int up    = row - 1;
-        int down  = row + 1;
-        int left  = col - 1;
-        int right = col + 1;
-        return value(up,   right) + value(up,   col) + value(up,   left) +
-               value(row,  right) + /* this cell */  + value(row,  left) +
-               value(down, right) + value(down, col) + value(down, left);
-        //@formatter:on
-    }
-
-    private int value(int row, int col) {
-        return grid[row][col] ? 1 : 0;
+        ps.progress();
     }
 
     private void spawn(int row, int col) {
@@ -221,18 +234,16 @@ public final class GameOfLife {
         return size;
     }
 
+    public int getChunks() {
+        return chunks;
+    }
+
+    public boolean isParallel() {
+        return parallel;
+    }
+
     private static boolean[][] buildGrid(boolean[][] initial, int rows, int columns) {
-        if (rows < MIN_DIMENSION_SIZE) {
-            throw new IllegalArgumentException("Number of rows expected >= 1, got " + rows);
-        }
-        if (columns < MIN_DIMENSION_SIZE) {
-            throw new IllegalArgumentException("Number of columns expected >= 1, got " + rows);
-        }
-        // pad matrix from all sides to avoid range checks on neighbor calculation
-        boolean[][] grid = new boolean[rows + 2][columns + 2];
-        if (initial == null) {
-            return grid;
-        }
+        boolean[][] grid = initGrid(rows, columns);
         int rowsLength = Math.min(rows, initial.length);
         for (int i = 0; i < rowsLength; i++) {
             boolean[] row = initial[i];
@@ -243,6 +254,138 @@ public final class GameOfLife {
         return grid;
     }
 
+    private static boolean[][] initGrid(int rows, int columns) {
+        if (rows < MIN_DIMENSION_SIZE) {
+            throw new IllegalArgumentException("Number of rows expected >= 1, got " + rows);
+        }
+        if (columns < MIN_DIMENSION_SIZE) {
+            throw new IllegalArgumentException("Number of columns expected >= 1, got " + rows);
+        }
+        // pad matrix from all sides to avoid range checks on neighbor calculation
+        return new boolean[rows + 2][columns + 2];
+    }
+
+    //region progress strategy
+    private interface ProgressStrategy {
+        void progress();
+    }
+
+    private abstract class ChunkedProgressStrategy implements ProgressStrategy {
+
+        NextGen progressChunk(int fromRow, int fromCol, int toRow, int toCol) {
+            toRow = Math.min(upperRowBound, toRow);
+            toCol = Math.min(upperColBound, toCol);
+            var died = new CellBag();
+            var spawned = new CellBag();
+            for (int row = fromRow; row < toRow; row++) {
+                for (int col = fromCol; col < toCol; col++) {
+                    int neighbors = neighbors(row, col);
+                    // depending on whether the cell is alive
+                    if (grid[row][col]) {
+                        // overcrowding or underpopulation
+                        if (neighbors < 2 || neighbors > 3) died.add(row, col);
+                    } else {
+                        // reproduction
+                        if (neighbors == 3) spawned.add(row, col);
+                    }
+                }
+            }
+            return new NextGen(spawned, died);
+        }
+
+        private int neighbors(int row, int col) {
+            //@formatter:off
+            int up    = row - 1;
+            int down  = row + 1;
+            int left  = col - 1;
+            int right = col + 1;
+            return value(up,   right) + value(up,   col) + value(up,   left) +
+                   value(row,  right) + /* this cell */  + value(row,  left) +
+                   value(down, right) + value(down, col) + value(down, left);
+            //@formatter:on
+        }
+
+        private int value(int row, int col) {
+            return grid[row][col] ? 1 : 0;
+        }
+
+    }
+
+    private final class AllAtOnceProgressStrategy extends ChunkedProgressStrategy {
+        @Override
+        public void progress() {
+            var nextGen = progressChunk(LOWER_BOUND, LOWER_BOUND, upperRowBound, upperColBound);
+            nextGen.updateGrid();
+        }
+    }
+
+    private final class ParallelProgressStrategy extends ChunkedProgressStrategy {
+
+        private final ExecutorService progressPool;
+
+        public ParallelProgressStrategy() {
+            progressPool = GameOfLife.this.progressPool;
+        }
+
+        @Override
+        public void progress() {
+            var progressTasks = new ArrayList<Callable<NextGen>>(chunks);
+            for (int row = LOWER_BOUND; row < upperRowBound; row += chunkWidth) {
+                for (int col = LOWER_BOUND; col < upperColBound; col += chunkHeight) {
+                    int fromRow = row;
+                    int fromCol = col;
+                    int toRow = fromRow + chunkWidth;
+                    int toCol = fromCol + chunkHeight;
+                    progressTasks.add(() -> progressChunk(fromRow, fromCol, toRow, toCol));
+                }
+            }
+            try {
+                var gridUpdates = new ArrayList<Callable<Void>>(chunks);
+                for (var chunk : progressPool.invokeAll(progressTasks)) {
+                    gridUpdates.add(gridUpdate(chunk.get()));
+                }
+                for (var update : progressPool.invokeAll(gridUpdates)) {
+                    update.get();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private Callable<Void> gridUpdate(NextGen nextGen) {
+            return () -> {
+                nextGen.updateGrid();
+                return null;
+            };
+        }
+    }
+
+    private final class ThreadSafeProgressStrategy implements ProgressStrategy {
+
+        private final ProgressStrategy inner;
+
+        private final Lock mutex;
+
+        private ThreadSafeProgressStrategy(ProgressStrategy inner) {
+            this.inner = inner;
+            this.mutex = gridLock.writeLock();
+        }
+
+        @Override
+        public void progress() {
+            mutex.lock();
+            try {
+                inner.progress();
+            } finally {
+                mutex.unlock();
+            }
+        }
+    }
+    //endregion
+
+    //region bulk cell ops
     private final class NextGen {
 
         final CellBag spawned;
@@ -323,4 +466,5 @@ public final class GameOfLife {
         }
 
     }
+    //endregion
 }
