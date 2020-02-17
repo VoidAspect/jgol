@@ -5,10 +5,7 @@ import com.voidaspect.jgol.config.GameOfLifeConfig;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -72,7 +69,7 @@ public final class GameOfLife {
 
     private final int chunks;
 
-    private final ExecutorService progressPool;
+    private ExecutorService progressPool;
 
     private final boolean threadSafe;
 
@@ -80,7 +77,7 @@ public final class GameOfLife {
 
     private final ReadWriteLock gridLock;
 
-    private final ProgressStrategy ps;
+    private ProgressStrategy ps;
 
     public GameOfLife(int rows, int columns) {
         this(new GameOfLifeConfig().setRows(rows).setColumns(columns));
@@ -125,6 +122,32 @@ public final class GameOfLife {
             gridLock = null;
         }
         this.ps = ps;
+    }
+
+    public void finish() {
+        if (threadSafe) {
+            lockAndFinish();
+        } else {
+            finishInner();
+        }
+    }
+
+    private void lockAndFinish() {
+        var lock = gridLock.writeLock();
+        lock.lock();
+        try {
+            finishInner();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void finishInner() {
+        this.ps = ProgressStrategy.NOOP;
+        if (progressPool != null) {
+            progressPool.shutdown();
+            progressPool = null; // to the garbage it goes
+        }
     }
 
     public void set(int row, int col, boolean state) {
@@ -267,7 +290,11 @@ public final class GameOfLife {
 
     //region progress strategy
     private interface ProgressStrategy {
+
+        ProgressStrategy NOOP = () -> {};
+
         void progress();
+
     }
 
     private abstract class ChunkedProgressStrategy implements ProgressStrategy {

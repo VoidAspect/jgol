@@ -47,6 +47,15 @@ class GameOfLifeTest {
     }
 
     @Test
+    void shouldNotChangeAfterFinish() {
+        byte[][] expected = {{1}};
+        var game = game(expected);
+        game.finish();
+        game.progress();
+        assertGame(expected, game);
+    }
+
+    @Test
     void shouldProgressOnLargeEmptyGrid() {
         int side = 20_000;
         var game = new GameOfLife(side, side);
@@ -81,7 +90,9 @@ class GameOfLifeTest {
         expected[edge][0] = false;
         expected[edge][edge] = false;
         assertTimeout(Duration.ofSeconds(1), game::progress);
-        game.progress();
+        assertArrayEquals(expected, game.snapshot());
+        game.finish();
+        assertTimeout(Duration.ofMillis(1), game::progress);
         assertArrayEquals(expected, game.snapshot());
     }
 
