@@ -1,6 +1,7 @@
 package com.voidaspect.jgol.grid;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class PaddedInMemoryGrid implements Grid {
 
@@ -32,11 +33,15 @@ public class PaddedInMemoryGrid implements Grid {
 
     @Override
     public boolean get(int row, int col) {
+        Objects.checkIndex(row, rows);
+        Objects.checkIndex(col, columns);
         return grid[row + 1][col + 1];
     }
 
     @Override
     public void set(int row, int col, boolean state) {
+        Objects.checkIndex(row, rows);
+        Objects.checkIndex(col, columns);
         grid[row + 1][col + 1] = state;
     }
 

@@ -7,20 +7,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public final class ThreadSafeGoL implements GameOfLife {
+public final class ThreadSafeLife implements GameOfLife {
 
     private final ReadWriteLock gridLock;
 
-    private final GoL game;
+    private final GameOfLife life;
 
     private final ThreadSafeGrid grid;
 
     private final AtomicBoolean finished;
 
-    ThreadSafeGoL(Grid grid, ProgressStrategy ps, Runnable onFinish) {
-        this.game = new GoL(grid, ps, onFinish);
+    ThreadSafeLife(GameOfLife life) {
+        this.life = life;
         this.gridLock = new ReentrantReadWriteLock();
-        this.grid = new ThreadSafeGrid(game.grid());
+        this.grid = new ThreadSafeGrid(life.grid());
         this.finished = new AtomicBoolean();
     }
 
@@ -30,7 +30,7 @@ public final class ThreadSafeGoL implements GameOfLife {
         var lock = gridLock.writeLock();
         lock.lock();
         try {
-            game.progress();
+            life.progress();
         } finally {
             lock.unlock();
         }
@@ -42,7 +42,7 @@ public final class ThreadSafeGoL implements GameOfLife {
             var lock = gridLock.writeLock();
             lock.lock();
             try {
-                game.finish();
+                life.finish();
             } finally {
                 lock.unlock();
             }
@@ -54,6 +54,9 @@ public final class ThreadSafeGoL implements GameOfLife {
         return grid;
     }
 
+    /**
+     * Thread-safe view of a {@link Grid} object. Uses read-write locking.
+     */
     private final class ThreadSafeGrid implements Grid {
 
         private final Grid inner;
@@ -75,6 +78,7 @@ public final class ThreadSafeGoL implements GameOfLife {
 
         @Override
         public void set(int row, int col, boolean state) {
+            if (get(row, col) == state) return; // don't need write lock if no update happens
             var lock = gridLock.writeLock();
             lock.lock();
             try {

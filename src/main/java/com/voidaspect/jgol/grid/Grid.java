@@ -17,4 +17,5 @@ public interface Grid {
     int getColumns();
 
     long getSize();
+
 }

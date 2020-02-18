@@ -3,18 +3,19 @@ package com.voidaspect.jgol.game;
 import com.voidaspect.jgol.GameOfLife;
 import com.voidaspect.jgol.grid.Grid;
 
-public final class GoL implements GameOfLife {
+public final class Life implements GameOfLife {
 
-    /**
-     * Game of life grid - each cell can have one of two states: false = dead, true = alive
-     */
     private final Grid grid;
 
     private final Runnable onFinish;
 
     private ProgressStrategy ps;
 
-    GoL(Grid grid, ProgressStrategy ps, Runnable onFinish) {
+    Life(Grid grid, ProgressStrategy ps) {
+        this(grid, ps, null);
+    }
+
+    Life(Grid grid, ProgressStrategy ps, Runnable onFinish) {
         this.grid = grid;
         this.ps = ps;
         this.onFinish = onFinish;

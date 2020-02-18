@@ -33,23 +33,20 @@ public class GameOfLifeBuilder {
 
     public GameOfLife build() {
         long size = grid.getSize();
-        ProgressStrategy ps;
-        Runnable onFinish;
+        final GameOfLife life;
         if (parallel && size > parallelizationThreshold) {
             var progressPool = getProgressExecutor()
                     .orElseGet(() -> Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
             int chunkSize = chunkWidth * chunkHeight;
             int chunks = (int) (size / chunkSize);
-            if (chunks * chunkSize < size) chunks++;
-            ps = new ParallelProgressStrategy(grid, progressPool, chunkHeight, chunkWidth, chunks);
-            onFinish = progressPool::shutdown;
+            if (chunks * chunkSize < size) chunks++; // number of chunks should be large enough to cover all cells
+            var ps = new ParallelProgressStrategy(grid, progressPool, chunkHeight, chunkWidth, chunks);
+            life = new Life(grid, ps, progressPool::shutdown);
         } else {
-            ps = new AllAtOnceProgressStrategy(grid);
-            onFinish = null;
+            var ps = new AllAtOnceProgressStrategy(grid);
+            life = new Life(grid, ps);
         }
-        return threadSafe
-                ? new ThreadSafeGoL(grid, ps, onFinish)
-                : new GoL(grid, ps, onFinish);
+        return threadSafe ? new ThreadSafeLife(life) : life;
     }
 
     public Optional<ExecutorService> getProgressExecutor() {
