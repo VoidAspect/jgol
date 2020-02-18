@@ -110,6 +110,16 @@ final class ThreadSafeLife extends AbstractLife {
         }
 
         @Override
+        public boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns) {
+            var lock = gridLock.readLock();
+            try {
+                return inner.snapshot(fromRow, fromColumn, rows, columns);
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        @Override
         public void clear() {
             var lock = gridLock.writeLock();
             try {

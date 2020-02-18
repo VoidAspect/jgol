@@ -10,6 +10,8 @@ public interface Grid {
 
     boolean[][] snapshot();
 
+    boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns);
+
     void clear();
 
     int getRows();
