@@ -74,6 +74,21 @@ public final class PaddedInMemoryGrid implements Grid {
     }
 
     @Override
+    public boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns) {
+        Objects.checkFromIndexSize(fromRow, rows, this.rows);
+        Objects.checkFromIndexSize(fromColumn, columns, this.columns);
+        boolean[][] snapshot = new boolean[rows][];
+        fromColumn += PADDING;
+        fromRow += PADDING;
+        int toColumn = fromColumn + columns;
+        for (int i = 0; i < rows; i++) {
+            boolean[] row = grid[i + fromRow];
+            snapshot[i] = Arrays.copyOfRange(row, fromColumn, toColumn);
+        }
+        return snapshot;
+    }
+
+    @Override
     public void clear() {
         var empty = grid[0];
         for (int i = PADDING; i < upperRowBound; i++) {

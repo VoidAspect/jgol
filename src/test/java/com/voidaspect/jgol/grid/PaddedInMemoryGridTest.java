@@ -67,6 +67,45 @@ class PaddedInMemoryGridTest {
     }
 
     @Test
+    void shouldSnapshotRegion() {
+        boolean[][] initial = {
+                {false, false, false},
+                {false, true, false},
+                {false, false, false},
+        };
+
+        var grid = new PaddedInMemoryGrid(initial, 3, 3);
+
+        assertArrayEquals(initial, grid.snapshot(0, 0, 3, 3));
+        assertArrayEquals(new boolean[][]{
+                {false, false, false},
+                {false, true, false},
+        }, grid.snapshot(0, 0, 2, 3));
+        assertArrayEquals(new boolean[][]{
+                {false, false},
+                {false, true},
+        }, grid.snapshot(0, 0, 2, 2));
+        assertArrayEquals(new boolean[][]{
+                {false, false},
+                {false, true},
+                {false, false}
+        }, grid.snapshot(0, 0, 3, 2));
+        assertArrayEquals(new boolean[][]{{false}}, grid.snapshot(2, 2, 1, 1));
+        assertArrayEquals(new boolean[0][], grid.snapshot(2, 2, 0, 0));
+
+        assertThrows(IndexOutOfBoundsException.class, () -> grid
+                .snapshot(-1, -1, 1, 1));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid
+                .snapshot(0, 0, 4, 1));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid
+                .snapshot(0, 0, 1, 4));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid
+                .snapshot(0, 0, -1, 3));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid
+                .snapshot(0, 0, 3, -1));
+    }
+
+    @Test
     void shouldClearGrid() {
         var grid = new PaddedInMemoryGrid(new boolean[][]{
                 {true, true, true},
