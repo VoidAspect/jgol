@@ -36,8 +36,7 @@ public final class PaddedInMemoryGrid implements Grid {
 
     @Override
     public boolean get(int row, int col) {
-        Objects.checkIndex(row, rows);
-        Objects.checkIndex(col, columns);
+        // don't perform range checks, edges are always false
         return grid[row + PADDING][col + PADDING];
     }
 

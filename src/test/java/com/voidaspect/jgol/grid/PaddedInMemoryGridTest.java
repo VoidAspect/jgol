@@ -35,10 +35,10 @@ class PaddedInMemoryGridTest {
         assertFalse(grid.get(2, 1));
         assertFalse(grid.get(2, 2));
 
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(-1, 0));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(0, -1));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(3, 1));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(1, 3));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.set(-1, 0, true));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.set(0, -1, true));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.set(3, 1, true));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.set(1, 3, true));
     }
 
     @Test
