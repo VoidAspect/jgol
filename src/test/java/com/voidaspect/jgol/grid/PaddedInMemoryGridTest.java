@@ -28,6 +28,9 @@ class PaddedInMemoryGridTest {
 
         assertTrue(grid.get(0, 2));
 
+        grid.set(0, 2, false);
+        assertFalse(grid.get(0, 2));
+
         assertFalse(grid.get(1, 0));
         assertFalse(grid.get(1, 1));
         assertFalse(grid.get(1, 2));
