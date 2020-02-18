@@ -11,45 +11,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class GameOfLifeTest {
 
     @Test
-    void shouldNotAllowInvalidGrids() {
-        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(0, 0));
-        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(0, 1));
-        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(1, 0));
-        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(-1, 0));
-        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(0, -1));
-        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(-1, -1));
-    }
-
-    @Test
-    void shouldCreateEmptyGrid() {
-        var game = new GameOfLifeBuilder(new PaddedInMemoryGrid(1, 1)).build();
-        assertGame(new byte[][]{{0}}, game);
-    }
-
-    @Test
-    void shouldCaptureSnapshots() {
-        var grid = new PaddedInMemoryGrid(3, 3);
-        var game = new GameOfLifeBuilder(grid).build();
-        assertArrayEquals(new boolean[][]{
-                {false, false, false},
-                {false, false, false},
-                {false, false, false},
-        }, grid.snapshot());
-        game.grid().set(1, 1, true);
-        assertArrayEquals(new boolean[][]{
-                {false, false, false},
-                {false, true, false},
-                {false, false, false},
-        }, grid.snapshot());
-        game.progress();
-        assertArrayEquals(new boolean[][]{
-                {false, false, false},
-                {false, false, false},
-                {false, false, false},
-        }, grid.snapshot());
-    }
-
-    @Test
     void shouldNotChangeAfterFinish() {
         byte[][] expected = {{1}};
         var game = game(expected);
@@ -62,7 +23,7 @@ class GameOfLifeTest {
     void shouldProgressOnLargeEmptyGrid() {
         int side = 20_000;
         var grid = new PaddedInMemoryGrid(side, side);
-        var game = new GameOfLifeBuilder(grid).build();
+        var game = GameOfLife.builder(grid).build();
         game.progress();
     }
 
@@ -71,7 +32,7 @@ class GameOfLifeTest {
         int side = 10000;
         int edge = side - 1;
         var grid = new PaddedInMemoryGrid(side, side);
-        var game = new GameOfLifeBuilder(grid).build();
+        var game = GameOfLife.builder(grid).build();
         boolean[][] expected = new boolean[side][side];
         assertArrayEquals(expected, grid.snapshot());
         // init loads of overcrowded cells - they should die off
@@ -96,22 +57,6 @@ class GameOfLifeTest {
         game.finish();
         assertTimeout(Duration.ofMillis(5), game::progress);
         assertArrayEquals(expected, grid.snapshot());
-    }
-
-    @Test
-    void shouldClearGrid() {
-        var game = game(new byte[][]{
-                {1, 1, 1},
-                {1, 1, 1},
-                {1, 1, 1}
-        });
-        byte[][] expected = {
-                {0, 0, 0},
-                {0, 0, 0},
-                {0, 0, 0}
-        };
-        game.grid().clear();
-        assertGame(expected, game);
     }
 
     @Test
@@ -423,7 +368,7 @@ class GameOfLifeTest {
         var inMemoryGrid = new PaddedInMemoryGrid(b, rows, columns);
         assertEquals(rows, inMemoryGrid.getRows());
         assertEquals(columns, inMemoryGrid.getColumns());
-        var game = new GameOfLifeBuilder(inMemoryGrid).build();
+        var game = GameOfLife.builder(inMemoryGrid).build();
         assertGame(grid, game);
         return game;
     }
