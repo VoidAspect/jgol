@@ -1,6 +1,7 @@
 package com.voidaspect.jgol.game;
 
 import com.voidaspect.jgol.grid.Grid;
+import com.voidaspect.jgol.listener.CellListener;
 
 abstract class ChunkedProgressStrategy implements ProgressStrategy {
 
@@ -10,7 +11,7 @@ abstract class ChunkedProgressStrategy implements ProgressStrategy {
         this.grid = grid;
     }
 
-    NextGen progressChunk(int fromRow, int fromCol, int toRow, int toCol) {
+    NextGen progressChunk(CellListener listener, int fromRow, int fromCol, int toRow, int toCol) {
         toRow = Math.min(grid.getColumns(), toRow);
         toCol = Math.min(grid.getRows(), toCol);
         var ng = new NextGen(grid);
@@ -19,11 +20,15 @@ abstract class ChunkedProgressStrategy implements ProgressStrategy {
                 int neighbors = grid.neighbors(row, col);
                 // depending on whether the cell is alive
                 if (grid.get(row, col)) {
-                    // overcrowding or underpopulation
-                    if (neighbors < 2 || neighbors > 3) ng.willDie(row, col);
-                } else {
+                    if (neighbors < 2 || neighbors > 3) {
+                        // overcrowding or underpopulation
+                        ng.willDie(row, col);
+                        listener.onCellDied(row, col);
+                    }
+                } else if (neighbors == 3) {
                     // reproduction
-                    if (neighbors == 3) ng.willSpawn(row, col);
+                    ng.willSpawn(row, col);
+                    listener.onCellSpawned(row, col);
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.voidaspect.jgol;
 
 import com.voidaspect.jgol.game.GameOfLifeBuilder;
 import com.voidaspect.jgol.grid.Grid;
+import com.voidaspect.jgol.listener.ProgressListener;
 
 /**
  * Conway's Game of Life - stateful cellular automaton governed by following rules:
@@ -17,6 +18,8 @@ import com.voidaspect.jgol.grid.Grid;
 public interface GameOfLife {
 
     void progress();
+
+    void progress(ProgressListener listener);
 
     void finish();
 
