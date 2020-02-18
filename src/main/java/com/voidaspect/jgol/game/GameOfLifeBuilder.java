@@ -3,6 +3,7 @@ package com.voidaspect.jgol.game;
 import com.voidaspect.jgol.GameOfLife;
 import com.voidaspect.jgol.grid.Grid;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -30,7 +31,7 @@ public class GameOfLifeBuilder {
     private final Grid grid;
 
     public GameOfLifeBuilder(Grid grid) {
-        this.grid = grid;
+        this.grid = Objects.requireNonNull(grid);
     }
 
     public GameOfLife build() {

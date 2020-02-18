@@ -35,6 +35,11 @@ class GameOfLifeBuilderTest {
     }
 
     @Test
+    void gridShouldNotBeNull() {
+        assertThrows(NullPointerException.class, () -> new GameOfLifeBuilder(null));
+    }
+
+    @Test
     void whenThreadSafeTrue_ShouldCreateThreadSafeLife() {
         setupLargeGrid();
 
