@@ -41,7 +41,7 @@ public class GameOfLifeBuilder {
     }
 
     protected ProgressStrategy chooseProgressStrategy() {
-        ProgressStrategy ps;
+        final ProgressStrategy ps;
         if (isParallel()) {
             long size = grid.getSize();
             int chunkSize = chunkWidth * chunkHeight;

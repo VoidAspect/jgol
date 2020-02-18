@@ -1,6 +1,7 @@
 package com.voidaspect.jgol.game;
 
 import com.voidaspect.jgol.grid.Grid;
+import com.voidaspect.jgol.listener.CellListener;
 
 import java.util.ArrayList;
 import java.util.concurrent.*;
@@ -32,7 +33,7 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
     }
 
     @Override
-    public void progress() {
+    public void progress(CellListener listener) {
         int rows = grid.getRows();
         int columns = grid.getColumns();
         var progressTasks = new ArrayList<Callable<NextGen>>(chunks);
@@ -42,7 +43,7 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
                 int fromCol = col;
                 int toRow = fromRow + chunkHeight;
                 int toCol = fromCol + chunkWidth;
-                progressTasks.add(() -> progressChunk(fromRow, fromCol, toRow, toCol));
+                progressTasks.add(() -> progressChunk(listener, fromRow, fromCol, toRow, toCol));
             }
         }
         try {

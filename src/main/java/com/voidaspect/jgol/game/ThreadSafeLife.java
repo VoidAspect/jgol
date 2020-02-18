@@ -1,23 +1,23 @@
 package com.voidaspect.jgol.game;
 
-import com.voidaspect.jgol.GameOfLife;
 import com.voidaspect.jgol.grid.Grid;
+import com.voidaspect.jgol.listener.CellListener;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public final class ThreadSafeLife implements GameOfLife {
+final class ThreadSafeLife extends AbstractLife {
 
     private final ReadWriteLock gridLock;
 
-    private final GameOfLife life;
+    private final AbstractLife life;
 
     private final ThreadSafeGrid grid;
 
     private final AtomicBoolean finished;
 
-    ThreadSafeLife(GameOfLife life) {
+    ThreadSafeLife(AbstractLife life) {
         this.life = life;
         this.gridLock = new ReentrantReadWriteLock();
         this.grid = new ThreadSafeGrid(life.grid());
@@ -25,12 +25,12 @@ public final class ThreadSafeLife implements GameOfLife {
     }
 
     @Override
-    public void progress() {
+    protected void nextGen(CellListener listener) {
         if (finished.get()) return;
         var lock = gridLock.writeLock();
         lock.lock();
         try {
-            life.progress();
+            life.nextGen(listener);
         } finally {
             lock.unlock();
         }

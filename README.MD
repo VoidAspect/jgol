@@ -14,7 +14,7 @@ It supports optional thread safety as well as parallel calculation of next gener
 
 Parallel progression is implemented by splitting the grid into chunks and dividing those between threads.
 It is used used upon the number of cells reaching the `parallelizationThreshold`, which is, by default, equal to
-**1 000 000 (1 million)**
+**1 000 000 (1 million)**.
 
 Each chunk, by default, is a **square 1000x1000** region of the grid.
 
@@ -26,9 +26,20 @@ Implementation can be flexible: grid can be strictly finite or circular, in-memo
 
 It supports read and write access and allows to count live neighbors of a cell.
 
-Cell on a grid is defined by two indices: `row` and `col`
+Cell on a grid is defined by two indices: `row` and `col`.
 
 For example, `com.voidaspect.jgol.grid.PaddedInMemoryGrid` uses a two-dimensional array of type
 `boolean[][]` to store cell values. 
 This implementation is optimized for speedy neighbor-count calculation and is suitable for most cases,
 although for a particularly large grid it will require a lot of heap memory.
+
+### Progress Listener
+`com.voidaspect.jgol.listener.ProgressListener` interface allows client to process events when game progresses.
+
+It supports 4 events:
+* progress started (game started to calculate new generation)
+* cell spawned (dead cell had exactly 3 live neighbors)
+* cell died (live cell had less than 2 or more than 3 live neighbors)
+* progress finished (new generation created)
+
+Thread safety is desirable for `ProgressListener` implementations.

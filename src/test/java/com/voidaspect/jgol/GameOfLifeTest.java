@@ -2,6 +2,7 @@ package com.voidaspect.jgol;
 
 import com.voidaspect.jgol.grid.PaddedInMemoryGrid;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 import java.time.Duration;
 
@@ -54,7 +55,7 @@ class GameOfLifeTest {
         game.progress();
         assertArrayEquals(expected, grid.snapshot());
         game.finish();
-        assertTimeout(Duration.ofMillis(5), game::progress);
+        assertTimeout(Duration.ofMillis(5), (Executable) game::progress);
         assertArrayEquals(expected, grid.snapshot());
     }
 

@@ -1,9 +1,9 @@
 package com.voidaspect.jgol.game;
 
-import com.voidaspect.jgol.GameOfLife;
 import com.voidaspect.jgol.grid.Grid;
+import com.voidaspect.jgol.listener.CellListener;
 
-public final class Life implements GameOfLife {
+final class Life extends AbstractLife {
 
     private final Grid grid;
 
@@ -26,8 +26,8 @@ public final class Life implements GameOfLife {
     }
 
     @Override
-    public void progress() {
-        ps.progress();
+    protected void nextGen(CellListener listener) {
+        ps.progress(listener);
     }
 
 }
