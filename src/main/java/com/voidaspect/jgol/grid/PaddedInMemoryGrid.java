@@ -3,7 +3,7 @@ package com.voidaspect.jgol.grid;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class PaddedInMemoryGrid implements Grid {
+public final class PaddedInMemoryGrid implements Grid {
 
     public static final int MIN_SIZE = 1;
 

@@ -1,6 +1,5 @@
 package com.voidaspect.jgol;
 
-import com.voidaspect.jgol.game.GameOfLifeBuilder;
 import com.voidaspect.jgol.grid.PaddedInMemoryGrid;
 import org.junit.jupiter.api.Test;
 
