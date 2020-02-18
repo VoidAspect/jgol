@@ -3,11 +3,11 @@ package com.voidaspect.jgol.game;
 import com.voidaspect.jgol.grid.Grid;
 
 import java.util.ArrayList;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 
 final class ParallelProgressStrategy extends ChunkedProgressStrategy {
+
+    private static final int TERMINATION_TIMEOUT_SECONDS = 10;
 
     private final ExecutorService progressPool;
 
@@ -56,6 +56,17 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void terminate() {
+        progressPool.shutdown();
+        try {
+            if (progressPool.awaitTermination(TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)) return;
+            throw new RuntimeException(new TimeoutException("Could not shutdown executor after 10 seconds"));
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }

@@ -14,4 +14,8 @@ final class AllAtOnceProgressStrategy extends ChunkedProgressStrategy {
         var nextGen = progressChunk(0, 0, grid.getRows(), grid.getColumns());
         nextGen.updateGrid();
     }
+
+    @Override
+    public void terminate() {
+    }
 }
