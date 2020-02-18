@@ -1,5 +1,7 @@
 package com.voidaspect.jgol;
 
+import com.voidaspect.jgol.game.GameOfLifeBuilder;
+import com.voidaspect.jgol.grid.PaddedInMemoryGrid;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -10,40 +12,41 @@ class GameOfLifeTest {
 
     @Test
     void shouldNotAllowInvalidGrids() {
-        assertThrows(IllegalArgumentException.class, () -> new GameOfLife(0, 0));
-        assertThrows(IllegalArgumentException.class, () -> new GameOfLife(0, 1));
-        assertThrows(IllegalArgumentException.class, () -> new GameOfLife(1, 0));
-        assertThrows(IllegalArgumentException.class, () -> new GameOfLife(-1, 0));
-        assertThrows(IllegalArgumentException.class, () -> new GameOfLife(0, -1));
-        assertThrows(IllegalArgumentException.class, () -> new GameOfLife(-1, -1));
+        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(0, 0));
+        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(0, 1));
+        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(1, 0));
+        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(-1, 0));
+        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(0, -1));
+        assertThrows(IllegalArgumentException.class, () -> new PaddedInMemoryGrid(-1, -1));
     }
 
     @Test
     void shouldCreateEmptyGrid() {
-        var game = new GameOfLife(1, 1);
+        var game = new GameOfLifeBuilder(new PaddedInMemoryGrid(1, 1)).build();
         assertGame(new byte[][]{{0}}, game);
     }
 
     @Test
     void shouldCaptureSnapshots() {
-        var game = new GameOfLife(3, 3);
+        var grid = new PaddedInMemoryGrid(3, 3);
+        var game = new GameOfLifeBuilder(grid).build();
         assertArrayEquals(new boolean[][]{
                 {false, false, false},
                 {false, false, false},
                 {false, false, false},
-        }, game.snapshot());
-        game.set(1, 1, true);
+        }, grid.snapshot());
+        game.grid().set(1, 1, true);
         assertArrayEquals(new boolean[][]{
                 {false, false, false},
                 {false, true, false},
                 {false, false, false},
-        }, game.snapshot());
+        }, grid.snapshot());
         game.progress();
         assertArrayEquals(new boolean[][]{
                 {false, false, false},
                 {false, false, false},
                 {false, false, false},
-        }, game.snapshot());
+        }, grid.snapshot());
     }
 
     @Test
@@ -58,42 +61,41 @@ class GameOfLifeTest {
     @Test
     void shouldProgressOnLargeEmptyGrid() {
         int side = 20_000;
-        var game = new GameOfLife(side, side);
-        assertEquals(400, game.getChunks());
-        assertTrue(game.isParallel());
-        assertTimeout(Duration.ofSeconds(1), game::progress);
+        var grid = new PaddedInMemoryGrid(side, side);
+        var game = new GameOfLifeBuilder(grid).build();
+        game.progress();
     }
 
     @Test
     void shouldHandleLargeGrid() {
         int side = 10000;
         int edge = side - 1;
-        var game = new GameOfLife(side, side);
-        assertEquals(100, game.getChunks());
+        var grid = new PaddedInMemoryGrid(side, side);
+        var game = new GameOfLifeBuilder(grid).build();
         boolean[][] expected = new boolean[side][side];
-        assertArrayEquals(expected, game.snapshot());
+        assertArrayEquals(expected, grid.snapshot());
         // init loads of overcrowded cells - they should die off
         for (int i = 0; i < side; i++) {
             for (int j = 0; j < side; j++) {
-                game.set(i, j, true);
+                grid.set(i, j, true);
             }
         }
         expected[0][0] = true;
         expected[0][edge] = true;
         expected[edge][0] = true;
         expected[edge][edge] = true;
-        assertTimeout(Duration.ofSeconds(2), game::progress);
-        assertArrayEquals(expected, game.snapshot());
+        game.progress();
+        assertArrayEquals(expected, grid.snapshot());
         // lonely cells at the corners die off
         expected[0][0] = false;
         expected[0][edge] = false;
         expected[edge][0] = false;
         expected[edge][edge] = false;
-        assertTimeout(Duration.ofSeconds(1), game::progress);
-        assertArrayEquals(expected, game.snapshot());
+        game.progress();
+        assertArrayEquals(expected, grid.snapshot());
         game.finish();
-        assertTimeout(Duration.ofMillis(1), game::progress);
-        assertArrayEquals(expected, game.snapshot());
+        assertTimeout(Duration.ofMillis(5), game::progress);
+        assertArrayEquals(expected, grid.snapshot());
     }
 
     @Test
@@ -108,7 +110,7 @@ class GameOfLifeTest {
                 {0, 0, 0},
                 {0, 0, 0}
         };
-        game.clear();
+        game.grid().clear();
         assertGame(expected, game);
     }
 
@@ -400,9 +402,10 @@ class GameOfLifeTest {
     }
 
     private static void assertGame(byte[][] expected, GameOfLife game) {
+        var grid = game.grid();
         for (int i = 0; i < expected.length; i++) {
             for (int j = 0; j < expected[i].length; j++) {
-                byte actual = game.isAlive(i, j) ? (byte) 1 : (byte) 0;
+                byte actual = grid.get(i, j) ? (byte) 1 : (byte) 0;
                 assertEquals(expected[i][j], actual, "mismatch at row=" + i + " column=" + j);
             }
         }
@@ -417,10 +420,10 @@ class GameOfLifeTest {
                 b[i][j] = grid[i][j] != 0;
             }
         }
-        var game = new GameOfLife(b, rows, columns);
-        assertEquals(rows, game.getRows());
-        assertEquals(columns, game.getColumns());
-        assertEquals(rows * columns, game.getSize());
+        var inMemoryGrid = new PaddedInMemoryGrid(b, rows, columns);
+        assertEquals(rows, inMemoryGrid.getRows());
+        assertEquals(columns, inMemoryGrid.getColumns());
+        var game = new GameOfLifeBuilder(inMemoryGrid).build();
         assertGame(grid, game);
         return game;
     }
