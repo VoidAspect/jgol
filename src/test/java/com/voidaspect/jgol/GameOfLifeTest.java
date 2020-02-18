@@ -6,41 +6,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class GameOfLifeTest {
 
     @Test
     void shouldSendProgressEvents() {
-        var recordedDeath = new ArrayList<Cell>();
-        var recordedSpawn = new ArrayList<Cell>();
-        var progressStarted = new AtomicInteger();
-        var progressFinished = new AtomicInteger();
-
-        var progressListener = new ProgressListener() {
-            @Override
-            public void onCellSpawned(int row, int col) {
-                recordedSpawn.add(new Cell(row, col));
-            }
-
-            @Override
-            public void onCellDied(int row, int col) {
-                recordedDeath.add(new Cell(row, col));
-            }
-
-            @Override
-            public void onProgressStart() {
-                progressStarted.incrementAndGet();
-            }
-
-            @Override
-            public void onProgressFinish() {
-                progressFinished.incrementAndGet();
-            }
-        };
+        var progressListener = mock(ProgressListener.class);
         var game = game(new byte[][]{
                 {0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0},
@@ -49,18 +23,14 @@ class GameOfLifeTest {
                 {0, 0, 0, 0, 0}
         });
         game.progress(progressListener);
-        assertEquals(1, progressStarted.get());
-        assertEquals(1, progressFinished.get());
-        assertEquals(2, recordedDeath.size());
-        assertEquals(2, recordedSpawn.size());
-        assertAll(
-                recordedDeath.get(0).test(2, 1),
-                recordedDeath.get(1).test(2, 3)
-        );
-        assertAll(
-                recordedSpawn.get(0).test(1, 2),
-                recordedSpawn.get(1).test(3, 2)
-        );
+
+        verify(progressListener, times(1)).onProgressStart();
+        verify(progressListener, times(1)).onProgressFinish();
+        verify(progressListener, times(1)).onCellSpawned(1, 2);
+        verify(progressListener, times(1)).onCellSpawned(3, 2);
+        verify(progressListener, times(1)).onCellDied(2, 1);
+        verify(progressListener, times(1)).onCellDied(2, 3);
+        verifyNoMoreInteractions(progressListener);
     }
 
     @Test
@@ -424,23 +394,6 @@ class GameOfLifeTest {
         var game = GameOfLife.builder(inMemoryGrid).build();
         assertGame(grid, game);
         return game;
-    }
-
-    private static final class Cell {
-        final int row;
-        final int col;
-
-        private Cell(int row, int col) {
-            this.row = row;
-            this.col = col;
-        }
-
-        Executable test(int row, int col) {
-            return () -> {
-                assertEquals(row, this.row);
-                assertEquals(col, this.col);
-            };
-        }
     }
 
 }
