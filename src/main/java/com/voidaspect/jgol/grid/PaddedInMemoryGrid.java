@@ -19,6 +19,8 @@ public class PaddedInMemoryGrid implements Grid {
 
     private final int upperColBound;
 
+    private final long size;
+
     public PaddedInMemoryGrid(int rows, int columns) {
         this(null, rows, columns);
     }
@@ -27,31 +29,34 @@ public class PaddedInMemoryGrid implements Grid {
         this.grid = buildGrid(grid, rows, columns);
         this.rows = rows;
         this.columns = columns;
-        this.upperRowBound = rows + 1;
-        this.upperColBound = columns + 1;
+        this.size = (long) rows * columns;
+        this.upperRowBound = rows + PADDING;
+        this.upperColBound = columns + PADDING;
     }
 
     @Override
     public boolean get(int row, int col) {
         Objects.checkIndex(row, rows);
         Objects.checkIndex(col, columns);
-        return grid[row + 1][col + 1];
+        return grid[row + PADDING][col + PADDING];
     }
 
     @Override
     public void set(int row, int col, boolean state) {
         Objects.checkIndex(row, rows);
         Objects.checkIndex(col, columns);
-        grid[row + 1][col + 1] = state;
+        grid[row + PADDING][col + PADDING] = state;
     }
 
     @Override
     public int neighbors(int row, int col) {
+        row += PADDING;
+        col += PADDING;
         //@formatter:off
-        int up    = row++;
-        int down  = row+1;
-        int left  = col++;
-        int right = col+1;
+        int up    = row - 1;
+        int down  = row + 1;
+        int left  = col - 1;
+        int right = col + 1;
         return value(up,   right) + value(up,   col) + value(up,   left) +
                value(row,  right) + /* this cell */  + value(row,  left) +
                value(down, right) + value(down, col) + value(down, left);
@@ -88,7 +93,7 @@ public class PaddedInMemoryGrid implements Grid {
 
     @Override
     public long getSize() {
-        return (long) columns * rows;
+        return size;
     }
 
     private int value(int row, int col) {
@@ -104,7 +109,7 @@ public class PaddedInMemoryGrid implements Grid {
             boolean[] row = initial[i];
             if (row == null) continue;
             int columnLength = Math.min(columns, row.length);
-            System.arraycopy(row, 0, grid[i + 1], PADDING, columnLength);
+            System.arraycopy(row, 0, grid[i + PADDING], PADDING, columnLength);
         }
         return grid;
     }
