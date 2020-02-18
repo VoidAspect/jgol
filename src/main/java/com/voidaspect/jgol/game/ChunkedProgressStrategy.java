@@ -7,7 +7,7 @@ abstract class ChunkedProgressStrategy implements ProgressStrategy {
 
     final Grid grid;
 
-    protected ChunkedProgressStrategy(Grid grid) {
+    ChunkedProgressStrategy(Grid grid) {
         this.grid = grid;
     }
 
