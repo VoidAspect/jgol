@@ -79,9 +79,12 @@ class GameOfLifeBuilderTest {
     @Test
     void shouldCleanupExecutorOnParallelStrategy() throws Exception {
         setupLargeGrid();
+
         var executor = mock(ExecutorService.class);
         when(executor.awaitTermination(anyLong(), any())).thenReturn(true);
+
         var builder = new GameOfLifeBuilder(grid).setProgressExecutor(executor);
+
         assertTrue(builder.getProgressExecutor().isPresent());
         assertSame(executor, builder.getProgressExecutor().get());
         assertTrue(builder.isParallel());
@@ -89,12 +92,22 @@ class GameOfLifeBuilderTest {
         var ps = builder.chooseProgressStrategy();
 
         assertEquals(ParallelProgressStrategy.class, ps.getClass());
+        assertEquals(200, builder.getChunks());
 
         var life = builder.build();
         life.finish();
         verify(executor, times(1)).shutdown();
         verify(executor, times(1)).awaitTermination(anyLong(), any());
         verifyNoMoreInteractions(executor);
+    }
+
+    @Test
+    void chunkCountShouldBeEnoughToCoverAllCells() {
+        setupGrid(10_00, 10_01);
+
+        var builder = new GameOfLifeBuilder(grid);
+        assertEquals(1_000_000, builder.getChunkWidth() * builder.getChunkHeight());
+        assertEquals(2, builder.getChunks());
     }
 
     @Test

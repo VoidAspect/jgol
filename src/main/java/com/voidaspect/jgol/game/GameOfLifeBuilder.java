@@ -43,11 +43,7 @@ public class GameOfLifeBuilder {
     protected ProgressStrategy chooseProgressStrategy() {
         final ProgressStrategy ps;
         if (isParallel()) {
-            long size = grid.getSize();
-            int chunkSize = chunkWidth * chunkHeight;
-            int fullChunks = (int) (size / chunkSize);
-            // number of chunks should be large enough to cover all cells
-            int chunks = fullChunks * chunkSize < size ? fullChunks + 1 : fullChunks;
+            int chunks = getChunks();
             var progressPool = getProgressExecutor().orElseGet(() -> Executors
                     // by default, progress strategy will maintain a fixed thread pool.
                     // Threads are released upon termination.
@@ -57,6 +53,40 @@ public class GameOfLifeBuilder {
             ps = new AllAtOnceProgressStrategy(grid);
         }
         return ps;
+    }
+
+    public int getChunks() {
+        long size = grid.getSize();
+        int chunkSize = chunkWidth * chunkHeight;
+        int chunks = (int) (size / chunkSize);
+        // number of chunks should be large enough to cover all cells
+        return chunks * chunkSize < size ? chunks + 1 : chunks;
+    }
+
+    public int getChunkHeight() {
+        return chunkHeight;
+    }
+
+    public GameOfLifeBuilder setChunkHeight(int chunkHeight) {
+        if (chunkHeight < MIN_CHUNK_SIZE || chunkHeight > grid.getRows()) {
+            throw new IllegalArgumentException("Chunk height should be between 1 and "
+                    + grid.getRows() + ", got " + chunkHeight);
+        }
+        this.chunkHeight = chunkHeight;
+        return this;
+    }
+
+    public int getChunkWidth() {
+        return chunkWidth;
+    }
+
+    public GameOfLifeBuilder setChunkWidth(int chunkWidth) {
+        if (chunkWidth < MIN_CHUNK_SIZE || chunkWidth > grid.getColumns()) {
+            throw new IllegalArgumentException("Chunk width should be between 1 and "
+                    + grid.getColumns() + ", got " + chunkWidth);
+        }
+        this.chunkWidth = chunkWidth;
+        return this;
     }
 
     public Optional<ExecutorService> getProgressExecutor() {
@@ -89,33 +119,6 @@ public class GameOfLifeBuilder {
         this.parallel = parallel;
         return this;
     }
-
-    public int getChunkHeight() {
-        return chunkHeight;
-    }
-
-    public GameOfLifeBuilder setChunkHeight(int chunkHeight) {
-        if (chunkHeight < MIN_CHUNK_SIZE || chunkHeight > grid.getRows()) {
-            throw new IllegalArgumentException("Chunk height should be between 1 and "
-                    + grid.getRows() + ", got " + chunkHeight);
-        }
-        this.chunkHeight = chunkHeight;
-        return this;
-    }
-
-    public int getChunkWidth() {
-        return chunkWidth;
-    }
-
-    public GameOfLifeBuilder setChunkWidth(int chunkWidth) {
-        if (chunkWidth < MIN_CHUNK_SIZE || chunkWidth > grid.getColumns()) {
-            throw new IllegalArgumentException("Chunk width should be between 1 and "
-                    + grid.getColumns() + ", got " + chunkWidth);
-        }
-        this.chunkWidth = chunkWidth;
-        return this;
-    }
-
     public boolean isThreadSafe() {
         return threadSafe;
     }
