@@ -1,6 +1,7 @@
 package com.voidaspect.jgol;
 
 import com.voidaspect.jgol.grid.PaddedInMemoryGrid;
+import com.voidaspect.jgol.listener.LoggingProgressListener;
 import com.voidaspect.jgol.listener.ProgressListener;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
@@ -11,6 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class GameOfLifeTest {
+
+    private final LoggingProgressListener lpl = new LoggingProgressListener();
 
     @Test
     void shouldSendProgressEvents() {
@@ -40,6 +43,21 @@ class GameOfLifeTest {
         game.finish();
         game.progress();
         assertGame(expected, game);
+    }
+
+    @Test
+    void shouldProgressOverManyGenerations() {
+        boolean[][] initial = {
+                {true, true},
+                {true, true}
+        };
+        var grid = new PaddedInMemoryGrid(initial, 10, 10);
+        int generations = 1_000_000;
+        var game = GameOfLife.builder(grid).build();
+        while (generations-- > 0) {
+            game.progress();
+        }
+        assertArrayEquals(initial, grid.snapshot(0, 0, 2, 2));
     }
 
     @Test
@@ -94,9 +112,9 @@ class GameOfLifeTest {
                 {0, 0, 0},
                 {0, 0, 0}
         };
-        game.progress();
+        game.progress(lpl);
         assertGame(expected, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(expected, game);
     }
 
@@ -113,9 +131,9 @@ class GameOfLifeTest {
                 {0, 0, 0}
         };
         var game = game(initial);
-        game.progress();
+        game.progress(lpl);
         assertGame(expected, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(expected, game);
     }
 
@@ -132,9 +150,9 @@ class GameOfLifeTest {
                 {1, 1, 0},
                 {0, 0, 0}
         };
-        game.progress();
+        game.progress(lpl);
         assertGame(expected, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(expected, game);
     }
 
@@ -153,7 +171,7 @@ class GameOfLifeTest {
                 {0, 1, 0}
         };
         assertGame(expected, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(expected, game);
     }
 
@@ -167,9 +185,9 @@ class GameOfLifeTest {
                 {0, 0, 0, 0, 0}
         };
         var game = game(initial);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
     }
 
@@ -182,9 +200,9 @@ class GameOfLifeTest {
                 {0, 0, 0, 0}
         };
         var game = game(initial);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
     }
 
@@ -198,9 +216,9 @@ class GameOfLifeTest {
                 {0, 0, 0, 0, 0}
         };
         var game = game(initial);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
     }
 
@@ -214,9 +232,9 @@ class GameOfLifeTest {
                 {0, 0, 0, 0, 0, 0}
         };
         var game = game(initial);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
     }
 
@@ -231,9 +249,9 @@ class GameOfLifeTest {
                 {0, 0, 0, 0, 0, 0}
         };
         var game = game(initial);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
     }
 
@@ -254,11 +272,11 @@ class GameOfLifeTest {
                 {0, 0, 0, 0, 0}
         };
         var game = game(initial);
-        game.progress();
+        game.progress(lpl);
         assertGame(next, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(next, game);
     }
 
@@ -281,11 +299,11 @@ class GameOfLifeTest {
                 {0, 0, 0, 0, 0, 0}
         };
         var game = game(initial);
-        game.progress();
+        game.progress(lpl);
         assertGame(next, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(next, game);
     }
 
@@ -308,11 +326,11 @@ class GameOfLifeTest {
                 {0, 0, 0, 0, 0, 0}
         };
         var game = game(initial);
-        game.progress();
+        game.progress(lpl);
         assertGame(next, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(initial, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(next, game);
     }
 
@@ -359,13 +377,13 @@ class GameOfLifeTest {
                 {0, 0, 0, 0, 0, 0}
         };
         var game = game(initial);
-        game.progress();
+        game.progress(lpl);
         assertGame(step1, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(step2, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(step3, game);
-        game.progress();
+        game.progress(lpl);
         assertGame(step4, game);
     }
 
