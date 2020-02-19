@@ -5,7 +5,7 @@ import com.voidaspect.jgol.listener.CellListener;
 
 import java.util.Arrays;
 
-abstract class ChunkedProgressStrategy implements ProgressStrategy {
+abstract class ChunkedProgressStrategy extends FreezingProgressStrategy {
 
     final Grid grid;
 
@@ -54,6 +54,10 @@ abstract class ChunkedProgressStrategy implements ProgressStrategy {
 
         public void willSpawn(int row, int col) {
             spawned.add(row, col);
+        }
+
+        public int countUpdates() {
+            return spawned.size + died.size;
         }
 
         void updateGrid() {
