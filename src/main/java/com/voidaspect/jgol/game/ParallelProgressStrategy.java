@@ -37,7 +37,7 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
     }
 
     @Override
-    public void progress(CellListener listener) {
+    public int progressAndCountUpdates(CellListener listener) {
         int rows = grid.getRows();
         int columns = grid.getColumns();
         var progressTasks = new ArrayList<Callable<NextGen>>(chunks);
@@ -50,10 +50,13 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
                 progressTasks.add(() -> progressChunk(listener, fromRow, fromCol, toRow, toCol));
             }
         }
+        int updates = 0;
         try {
             var gridUpdates = new ArrayList<Callable<Void>>(chunks);
             for (var chunk : progressPool.invokeAll(progressTasks)) {
-                gridUpdates.add(gridUpdate(chunk.get()));
+                var nextGen = chunk.get();
+                updates += nextGen.countUpdates();
+                gridUpdates.add(gridUpdate(nextGen));
             }
             for (var update : progressPool.invokeAll(gridUpdates)) {
                 update.get();
@@ -63,6 +66,7 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
+        return updates;
     }
 
     @Override

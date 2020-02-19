@@ -51,8 +51,8 @@ class GameOfLifeTest {
                 {true, true},
                 {true, true}
         };
-        var grid = new PaddedInMemoryGrid(initial, 10, 10);
-        int generations = 1_000_000;
+        var grid = new PaddedInMemoryGrid(initial, 10000, 10000);
+        int generations = Integer.MAX_VALUE;
         var game = GameOfLife.builder(grid).build();
         while (generations-- > 0) {
             game.progress();

@@ -10,9 +10,10 @@ final class AllAtOnceProgressStrategy extends ChunkedProgressStrategy {
     }
 
     @Override
-    public void progress(CellListener listener) {
+    int progressAndCountUpdates(CellListener listener) {
         var nextGen = progressChunk(listener, 0, 0, grid.getRows(), grid.getColumns());
         nextGen.updateGrid();
+        return nextGen.countUpdates();
     }
 
     @Override
