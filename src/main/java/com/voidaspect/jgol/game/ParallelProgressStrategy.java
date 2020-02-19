@@ -12,6 +12,8 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
 
     private final ExecutorService progressPool;
 
+    private final boolean keepPoolAlive;
+
     private final int chunkHeight;
 
     private final int chunkWidth;
@@ -21,12 +23,14 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
     public ParallelProgressStrategy(
             Grid grid,
             ExecutorService progressPool,
+            boolean keepPoolAlive,
             int chunkHeight,
             int chunkWidth,
             int chunks
     ) {
         super(grid);
         this.progressPool = progressPool;
+        this.keepPoolAlive = keepPoolAlive;
         this.chunkHeight = chunkHeight;
         this.chunkWidth = chunkWidth;
         this.chunks = chunks;
@@ -63,6 +67,8 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
 
     @Override
     public void terminate() {
+        if (keepPoolAlive) return;
+
         progressPool.shutdown();
         try {
             if (progressPool.awaitTermination(TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)) return;
