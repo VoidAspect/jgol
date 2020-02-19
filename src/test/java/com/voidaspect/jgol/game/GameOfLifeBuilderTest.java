@@ -1,10 +1,12 @@
 package com.voidaspect.jgol.game;
 
 import com.voidaspect.jgol.grid.Grid;
+import com.voidaspect.jgol.listener.ProgressListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -85,13 +87,12 @@ class GameOfLifeBuilderTest {
 
         var builder = new GameOfLifeBuilder(grid).setProgressExecutor(executor);
 
+        assertFalse(builder.shouldKeepPoolAlive());
         assertTrue(builder.getProgressExecutor().isPresent());
         assertSame(executor, builder.getProgressExecutor().get());
         assertTrue(builder.isParallel());
 
-        var ps = builder.chooseProgressStrategy();
-
-        assertEquals(ParallelProgressStrategy.class, ps.getClass());
+        assertEquals(ParallelProgressStrategy.class, builder.chooseProgressStrategy().getClass());
         assertEquals(200, builder.getChunks());
 
         var life = builder.build();
@@ -99,6 +100,44 @@ class GameOfLifeBuilderTest {
         verify(executor, times(1)).shutdown();
         verify(executor, times(1)).awaitTermination(anyLong(), any());
         verifyNoMoreInteractions(executor);
+    }
+
+    @Test
+    void whenExecutorShouldShutDownFalse_ShouldNotCallShutdown() {
+        setupLargeGrid();
+
+        var executor = mock(ExecutorService.class);
+
+        var builder = new GameOfLifeBuilder(grid)
+                .setProgressExecutor(executor)
+                .setKeepPoolAlive(true);
+
+        assertTrue(builder.shouldKeepPoolAlive());
+        assertTrue(builder.getProgressExecutor().isPresent());
+        assertSame(executor, builder.getProgressExecutor().get());
+        assertTrue(builder.isParallel());
+
+        assertEquals(ParallelProgressStrategy.class, builder.chooseProgressStrategy().getClass());
+
+        var life = builder.build();
+        life.finish();
+        verifyNoInteractions(executor);
+    }
+
+    @Test
+    void shouldAlways_ShutdownDefaultExecutor() {
+        setupLargeGrid();
+
+        var builder = new GameOfLifeBuilder(grid).setKeepPoolAlive(false);
+
+        assertFalse(builder.shouldKeepPoolAlive());
+        assertTrue(builder.getProgressExecutor().isEmpty());
+        assertTrue(builder.isParallel());
+
+        var ps = builder.chooseProgressStrategy();
+        assertEquals(ParallelProgressStrategy.class, ps.getClass());
+        ps.terminate();
+        assertThrows(RejectedExecutionException.class, () -> ps.progress(ProgressListener.NOOP));
     }
 
     @Test

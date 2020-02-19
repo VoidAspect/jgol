@@ -20,6 +20,8 @@ public class GameOfLifeBuilder {
 
     private boolean threadSafe = false;
 
+    private boolean keepPoolAlive = false;
+
     private ExecutorService progressExecutor;
 
     private int parallelizationThreshold = DEFAULT_PARALLEL_PROGRESSION_THRESHOLD;
@@ -44,11 +46,12 @@ public class GameOfLifeBuilder {
         final ProgressStrategy ps;
         if (isParallel()) {
             int chunks = getChunks();
+            boolean keepPoolAlive = shouldKeepPoolAlive();
             var progressPool = getProgressExecutor().orElseGet(() -> Executors
                     // by default, progress strategy will maintain a fixed thread pool.
                     // Threads are released upon termination.
                     .newFixedThreadPool(Math.min(chunks, Runtime.getRuntime().availableProcessors())));
-            ps = new ParallelProgressStrategy(grid, progressPool, chunkHeight, chunkWidth, chunks);
+            ps = new ParallelProgressStrategy(grid, progressPool, keepPoolAlive, chunkHeight, chunkWidth, chunks);
         } else {
             ps = new AllAtOnceProgressStrategy(grid);
         }
@@ -119,6 +122,7 @@ public class GameOfLifeBuilder {
         this.parallel = parallel;
         return this;
     }
+
     public boolean isThreadSafe() {
         return threadSafe;
     }
@@ -130,5 +134,15 @@ public class GameOfLifeBuilder {
 
     public Grid getGrid() {
         return grid;
+    }
+
+    public boolean shouldKeepPoolAlive() {
+        // if default pool is used, always shut it down
+        return progressExecutor != null && keepPoolAlive;
+    }
+
+    public GameOfLifeBuilder setKeepPoolAlive(boolean keepPoolAlive) {
+        this.keepPoolAlive = keepPoolAlive;
+        return this;
     }
 }
