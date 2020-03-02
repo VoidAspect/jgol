@@ -8,16 +8,20 @@ public abstract class AbstractLife implements GameOfLife {
 
     @Override
     public void progress() {
-        nextGen(ProgressListener.NOOP);
+        progressAndListen(ProgressListener.NOOP);
     }
 
     @Override
     public void progress(ProgressListener listener) {
-        if (listener == null) {
-            listener = ProgressListener.NOOP;
-        }
+        progressAndListen(listener != null ? listener : ProgressListener.NOOP);
+    }
+
+    private void progressAndListen(ProgressListener listener) {
+        if (isFinished()) return;
         listener.onProgressStart();
-        nextGen(listener);
+        if (!isFrozen()) {
+            nextGen(listener);
+        }
         listener.onProgressFinish();
     }
 

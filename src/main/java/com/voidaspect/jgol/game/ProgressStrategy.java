@@ -1,21 +1,12 @@
 package com.voidaspect.jgol.game;
 
+import com.voidaspect.jgol.Finishable;
+import com.voidaspect.jgol.Freezable;
+import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
-public interface ProgressStrategy {
+public interface ProgressStrategy extends Finishable, Freezable {
 
-    void progress(CellListener listener);
-
-    void terminate();
-
-    ProgressStrategy NOOP = new ProgressStrategy() {
-        @Override
-        public void progress(CellListener listener) {
-        }
-
-        @Override
-        public void terminate() {
-        }
-    };
+    void progress(Grid grid, CellListener listener);
 
 }

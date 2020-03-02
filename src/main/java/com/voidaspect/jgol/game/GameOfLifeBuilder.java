@@ -51,9 +51,9 @@ public class GameOfLifeBuilder {
                     // by default, progress strategy will maintain a fixed thread pool.
                     // Threads are released upon termination.
                     .newFixedThreadPool(Math.min(chunks, Runtime.getRuntime().availableProcessors())));
-            ps = new ParallelProgressStrategy(grid, progressPool, keepPoolAlive, chunkHeight, chunkWidth, chunks);
+            ps = new ParallelProgressStrategy(progressPool, keepPoolAlive, chunkHeight, chunkWidth, chunks);
         } else {
-            ps = new AllAtOnceProgressStrategy(grid);
+            ps = new AllAtOnceProgressStrategy();
         }
         return ps;
     }

@@ -15,18 +15,20 @@ final class ThreadSafeLife extends AbstractLife {
 
     private final ThreadSafeGrid grid;
 
+    private final Grid inner;
+
     private final AtomicBoolean finished;
 
     ThreadSafeLife(AbstractLife life) {
         this.life = life;
         this.gridLock = new ReentrantReadWriteLock();
-        this.grid = new ThreadSafeGrid(life.grid());
+        this.inner = life.grid();
+        this.grid = new ThreadSafeGrid();
         this.finished = new AtomicBoolean();
     }
 
     @Override
     protected void nextGen(CellListener listener) {
-        if (finished.get()) return;
         var lock = gridLock.writeLock();
         lock.lock();
         try {
@@ -50,20 +52,52 @@ final class ThreadSafeLife extends AbstractLife {
     }
 
     @Override
+    public boolean isFinished() {
+        return finished.get();
+    }
+
+    @Override
     public Grid grid() {
         return grid;
+    }
+
+    @Override
+    public void freeze() {
+        var lock = gridLock.writeLock();
+        lock.lock();
+        try {
+            life.freeze();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void unfreeze() {
+        var lock = gridLock.writeLock();
+        lock.lock();
+        try {
+            life.unfreeze();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public boolean isFrozen() {
+        var lock = gridLock.readLock();
+        lock.lock();
+        try {
+            return life.isFrozen();
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
      * Thread-safe view of a {@link Grid} object. Uses read-write locking.
      */
     private final class ThreadSafeGrid implements Grid {
-
-        private final Grid inner;
-
-        private ThreadSafeGrid(Grid inner) {
-            this.inner = inner;
-        }
 
         @Override
         public boolean get(int row, int col) {

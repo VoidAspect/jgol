@@ -20,15 +20,13 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
 
     private final int chunks;
 
-    public ParallelProgressStrategy(
-            Grid grid,
+    ParallelProgressStrategy(
             ExecutorService progressPool,
             boolean keepPoolAlive,
             int chunkHeight,
             int chunkWidth,
             int chunks
     ) {
-        super(grid);
         this.progressPool = progressPool;
         this.keepPoolAlive = keepPoolAlive;
         this.chunkHeight = chunkHeight;
@@ -37,7 +35,7 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
     }
 
     @Override
-    public int progressAndCountUpdates(CellListener listener) {
+    protected int progressAndCountUpdates(Grid grid, CellListener listener) {
         int rows = grid.getRows();
         int columns = grid.getColumns();
         var progressTasks = new ArrayList<Callable<NextGen>>(chunks);
@@ -47,7 +45,7 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
                 int fromCol = col;
                 int toRow = fromRow + chunkHeight;
                 int toCol = fromCol + chunkWidth;
-                progressTasks.add(() -> progressChunk(listener, fromRow, fromCol, toRow, toCol));
+                progressTasks.add(() -> progressChunk(grid, listener, fromRow, fromCol, toRow, toCol));
             }
         }
         int updates = 0;
@@ -70,7 +68,9 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
     }
 
     @Override
-    public void terminate() {
+    public void finish() {
+        super.finish();
+
         if (keepPoolAlive) return;
 
         progressPool.shutdown();
