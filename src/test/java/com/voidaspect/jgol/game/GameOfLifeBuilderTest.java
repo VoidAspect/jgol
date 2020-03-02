@@ -136,8 +136,10 @@ class GameOfLifeBuilderTest {
 
         var ps = builder.chooseProgressStrategy();
         assertEquals(ParallelProgressStrategy.class, ps.getClass());
-        ps.terminate();
-        assertThrows(RejectedExecutionException.class, () -> ps.progress(ProgressListener.NOOP));
+        ps.finish();
+        assertTrue(ps.isFinished());
+        assertThrows(RejectedExecutionException.class, () -> ((ParallelProgressStrategy) ps)
+                .progressAndCountUpdates(grid, ProgressListener.NOOP));
     }
 
     @Test

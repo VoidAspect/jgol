@@ -5,18 +5,11 @@ import com.voidaspect.jgol.listener.CellListener;
 
 final class AllAtOnceProgressStrategy extends ChunkedProgressStrategy {
 
-    AllAtOnceProgressStrategy(Grid grid) {
-        super(grid);
-    }
-
     @Override
-    int progressAndCountUpdates(CellListener listener) {
-        var nextGen = progressChunk(listener, 0, 0, grid.getRows(), grid.getColumns());
+    protected int progressAndCountUpdates(Grid grid, CellListener listener) {
+        var nextGen = progressChunk(grid, listener, 0, 0, grid.getRows(), grid.getColumns());
         nextGen.updateGrid();
         return nextGen.countUpdates();
     }
 
-    @Override
-    public void terminate() {
-    }
 }

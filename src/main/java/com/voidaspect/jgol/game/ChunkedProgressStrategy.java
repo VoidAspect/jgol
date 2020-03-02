@@ -7,16 +7,10 @@ import java.util.Arrays;
 
 abstract class ChunkedProgressStrategy extends FreezingProgressStrategy {
 
-    final Grid grid;
-
-    ChunkedProgressStrategy(Grid grid) {
-        this.grid = grid;
-    }
-
-    NextGen progressChunk(CellListener listener, int fromRow, int fromCol, int toRow, int toCol) {
+    NextGen progressChunk(Grid grid, CellListener listener, int fromRow, int fromCol, int toRow, int toCol) {
         toRow = Math.min(grid.getColumns(), toRow);
         toCol = Math.min(grid.getRows(), toCol);
-        var ng = new NextGen();
+        var ng = new NextGen(grid);
         for (int row = fromRow; row < toRow; row++) {
             for (int col = fromCol; col < toCol; col++) {
                 int neighbors = grid.neighbors(row, col);
@@ -37,13 +31,16 @@ abstract class ChunkedProgressStrategy extends FreezingProgressStrategy {
         return ng;
     }
 
-    final class NextGen {
+    static final class NextGen {
+
+        final Grid grid;
 
         final CellBag spawned;
 
         final CellBag died;
 
-        NextGen() {
+        NextGen(Grid grid) {
+            this.grid = grid;
             this.spawned = new CellBag();
             this.died = new CellBag();
         }

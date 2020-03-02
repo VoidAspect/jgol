@@ -15,13 +15,11 @@ import com.voidaspect.jgol.listener.ProgressListener;
  * State is updated via {@link #progress()} method.
  * When this game is finished, client is expected to call {@link #finish()} method to cleanup held resources
  */
-public interface GameOfLife {
+public interface GameOfLife extends Finishable, Freezable {
 
     void progress();
 
     void progress(ProgressListener listener);
-
-    void finish();
 
     Grid grid();
 

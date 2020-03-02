@@ -51,13 +51,27 @@ class GameOfLifeTest {
                 {true, true},
                 {true, true}
         };
-        var grid = new PaddedInMemoryGrid(initial, 10000, 10000);
         int generations = Integer.MAX_VALUE;
-        var game = GameOfLife.builder(grid).build();
+        var game = GameOfLife.builder(new PaddedInMemoryGrid(initial, 20000, 20000)).build();
+        assertFalse(game.isFrozen());
         while (generations-- > 0) {
             game.progress();
         }
-        assertArrayEquals(initial, grid.snapshot(0, 0, 2, 2));
+        assertTrue(game.isFrozen());
+        assertArrayEquals(initial, game.grid().snapshot(0, 0, 2, 2));
+
+        game.grid().set(3, 0, true);
+        game.grid().set(3, 1, true);
+        assertFalse(game.isFrozen());
+
+        boolean[][] expected = {{false, false}};
+        game.progress(lpl);
+        assertFalse(game.isFrozen());
+        assertArrayEquals(expected, game.grid().snapshot(3, 3, 1, 2));
+
+        game.progress(lpl);
+        assertTrue(game.isFrozen());
+        assertArrayEquals(expected, game.grid().snapshot(3, 3, 1, 2));
     }
 
     @Test
