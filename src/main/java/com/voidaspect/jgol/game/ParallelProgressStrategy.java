@@ -35,7 +35,7 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
     }
 
     @Override
-    protected int progressAndCountUpdates(Grid grid, CellListener listener) {
+    int progressAndCountUpdates(Grid grid, CellListener listener) {
         int rows = grid.getRows();
         int columns = grid.getColumns();
         var progressTasks = new ArrayList<Callable<NextGen>>(chunks);
