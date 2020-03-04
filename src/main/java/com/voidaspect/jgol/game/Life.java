@@ -12,8 +12,14 @@ final class Life extends AbstractLife {
     private final ProgressStrategy ps;
 
     Life(Grid grid, ProgressStrategy ps) {
-        this.inner = grid;
-        this.grid = new MutationAwareGrid();
+        if (grid instanceof MutationAwareGrid) {
+            var proxy = (MutationAwareGrid) grid;
+            this.inner = proxy.inner();
+            this.grid = proxy;
+        } else {
+            this.inner = grid;
+            this.grid = new MutationAwareGrid();
+        }
         this.ps = ps;
     }
 
@@ -53,6 +59,10 @@ final class Life extends AbstractLife {
     }
 
     private final class MutationAwareGrid implements Grid {
+
+        private Grid inner() {
+            return inner;
+        }
 
         @Override
         public boolean get(int row, int col) {
