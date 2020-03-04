@@ -39,7 +39,7 @@ public class GameOfLifeBuilder {
     public GameOfLife build() {
         var ps = chooseProgressStrategy();
         var life = new Life(grid, ps);
-        return threadSafe ? new ThreadSafeLife(life) : life;
+        return threadSafe ? ThreadSafeLife.of(life) : life;
     }
 
     protected ProgressStrategy chooseProgressStrategy() {
