@@ -3,13 +3,11 @@ package com.voidaspect.jgol.game;
 import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 
 final class ThreadSafeLife extends AbstractLife {
 
-    private final ReadWriteLock gridLock;
+    private final StampedLock gridLock;
 
     private final AbstractLife life;
 
@@ -17,43 +15,77 @@ final class ThreadSafeLife extends AbstractLife {
 
     private final Grid inner;
 
-    private final AtomicBoolean finished;
+    static ThreadSafeLife of(AbstractLife life) {
+        return life instanceof ThreadSafeLife
+                ? (ThreadSafeLife) life
+                : new ThreadSafeLife(life);
+    }
 
-    ThreadSafeLife(AbstractLife life) {
+    private ThreadSafeLife(AbstractLife life) {
         this.life = life;
-        this.gridLock = new ReentrantReadWriteLock();
+        this.gridLock = new StampedLock();
         this.inner = life.grid();
         this.grid = new ThreadSafeGrid();
-        this.finished = new AtomicBoolean();
     }
 
     @Override
     protected void nextGen(CellListener listener) {
-        var lock = gridLock.writeLock();
-        lock.lock();
+        long stamp = gridLock.writeLock();
         try {
             life.nextGen(listener);
         } finally {
-            lock.unlock();
+            gridLock.unlockWrite(stamp);
         }
     }
 
     @Override
     public void finish() {
-        if (finished.compareAndSet(false, true)) {
-            var lock = gridLock.writeLock();
-            lock.lock();
-            try {
-                life.finish();
-            } finally {
-                lock.unlock();
+        long stamp = gridLock.tryOptimisticRead();
+
+        if (stamp != 0) {
+            boolean finished = life.isFinished();
+            if (gridLock.validate(stamp)) {
+                if (finished) return;
+
+                stamp = gridLock.writeLock();
+                try {
+                    life.finish();
+                    return;
+                } finally {
+                    gridLock.unlockWrite(stamp);
+                }
             }
+        }
+
+        stamp = gridLock.readLock();
+
+        try {
+            if (life.isFinished()) return;
+
+            stamp = upgradeToWrite(stamp);
+
+            life.finish();
+        } finally {
+            gridLock.unlock(stamp);
         }
     }
 
     @Override
     public boolean isFinished() {
-        return finished.get();
+        long stamp = gridLock.tryOptimisticRead();
+
+        if (stamp != 0) {
+            boolean finished = life.isFinished();
+            if (gridLock.validate(stamp)) return finished;
+        }
+
+        stamp = gridLock.readLock();
+
+        try {
+            return life.isFinished();
+        } finally {
+            gridLock.unlockRead(stamp);
+        }
     }
 
     @Override
@@ -63,36 +95,97 @@ final class ThreadSafeLife extends AbstractLife {
 
     @Override
     public void freeze() {
-        var lock = gridLock.writeLock();
-        lock.lock();
+        long stamp = gridLock.tryOptimisticRead();
+
+        if (stamp != 0) {
+            boolean frozen = life.isFrozen();
+            if (gridLock.validate(stamp)) {
+                if (frozen) return;
+
+                stamp = gridLock.writeLock();
+                try {
+                    life.freeze();
+                    return;
+                } finally {
+                    gridLock.unlockWrite(stamp);
+                }
+            }
+        }
+
+        stamp = gridLock.readLock();
+
         try {
+            if (life.isFrozen()) return;
+
+            stamp = upgradeToWrite(stamp);
+
             life.freeze();
         } finally {
-            lock.unlock();
+            gridLock.unlock(stamp);
         }
     }
 
     @Override
     public void unfreeze() {
-        var lock = gridLock.writeLock();
-        lock.lock();
+        long stamp = gridLock.tryOptimisticRead();
+
+        if (stamp != 0) {
+            boolean frozen = life.isFrozen();
+            if (gridLock.validate(stamp)) {
+                if (!frozen) return;
+
+                stamp = gridLock.writeLock();
+                try {
+                    life.unfreeze();
+                    return;
+                } finally {
+                    gridLock.unlockWrite(stamp);
+                }
+            }
+        }
+
+        stamp = gridLock.readLock();
+
         try {
+            if (!life.isFrozen()) return;
+
+            stamp = upgradeToWrite(stamp);
+
             life.unfreeze();
         } finally {
-            lock.unlock();
+            gridLock.unlock(stamp);
         }
     }
 
     @Override
     public boolean isFrozen() {
-        var lock = gridLock.readLock();
-        lock.lock();
+        long stamp = gridLock.tryOptimisticRead();
+
+        if (stamp != 0) {
+            boolean frozen = life.isFrozen();
+            if (gridLock.validate(stamp)) return frozen;
+        }
+
+        stamp = gridLock.readLock();
+
         try {
             return life.isFrozen();
         } finally {
-            lock.unlock();
+            gridLock.unlockRead(stamp);
         }
     }
+
+    private long upgradeToWrite(long stamp) {
+        long ws = gridLock.tryConvertToWriteLock(stamp);
+        if (ws != 0) {
+            stamp = ws;
+        } else {
+            gridLock.unlockRead(stamp);
+            stamp = gridLock.writeLock();
+        }
+        return stamp;
+    }
+
 
     /**
      * Thread-safe view of a {@link Grid} object. Uses read-write locking.
@@ -101,95 +194,154 @@ final class ThreadSafeLife extends AbstractLife {
 
         @Override
         public boolean get(int row, int col) {
-            var lock = gridLock.readLock();
-            lock.lock();
+            long stamp = gridLock.tryOptimisticRead();
+
+            if (stamp != 0) {
+                boolean alive = inner.get(row, col);
+                if (gridLock.validate(stamp)) return alive;
+            }
+
+            stamp = gridLock.readLock();
+
             try {
                 return inner.get(row, col);
             } finally {
-                lock.unlock();
+                gridLock.unlockRead(stamp);
             }
         }
 
         @Override
         public void set(int row, int col, boolean state) {
-            if (get(row, col) == state) return; // don't need write lock if no update happens
-            var lock = gridLock.writeLock();
-            lock.lock();
+            // don't need write lock if no update happens
+            long stamp = gridLock.tryOptimisticRead();
+
+            if (stamp != 0) {
+                boolean alive = inner.get(row, col);
+                if (gridLock.validate(stamp)) {
+                    if (alive == state) return;
+
+                    stamp = gridLock.writeLock();
+                    try {
+                        inner.set(row, col, state);
+                        return;
+                    } finally {
+                        gridLock.unlockWrite(stamp);
+                    }
+                }
+            }
+
+            stamp = gridLock.readLock();
+
             try {
+                if (inner.get(row, col) == state) return;
+
+                stamp = upgradeToWrite(stamp);
+
                 inner.set(row, col, state);
             } finally {
-                lock.unlock();
+                gridLock.unlock(stamp);
             }
         }
 
         @Override
         public int neighbors(int row, int col) {
-            var lock = gridLock.readLock();
-            lock.lock();
+            long stamp = gridLock.tryOptimisticRead();
+
+            if (stamp != 0) {
+                int neighbors = inner.neighbors(row, col);
+                if (gridLock.validate(stamp)) return neighbors;
+            }
+
+            stamp = gridLock.readLock();
+
             try {
                 return inner.neighbors(row, col);
             } finally {
-                lock.unlock();
+                gridLock.unlockRead(stamp);
             }
         }
 
         @Override
         public boolean[][] snapshot() {
-            var lock = gridLock.readLock();
+            long stamp = gridLock.readLock();
             try {
                 return inner.snapshot();
             } finally {
-                lock.unlock();
+                gridLock.unlockRead(stamp);
             }
         }
 
         @Override
         public boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns) {
-            var lock = gridLock.readLock();
+            long stamp = gridLock.readLock();
             try {
                 return inner.snapshot(fromRow, fromColumn, rows, columns);
             } finally {
-                lock.unlock();
+                gridLock.unlockRead(stamp);
             }
         }
 
         @Override
         public void clear() {
-            var lock = gridLock.writeLock();
+            long stamp = gridLock.writeLock();
             try {
                 inner.clear();
             } finally {
-                lock.unlock();
+                gridLock.unlockWrite(stamp);
             }
         }
 
         @Override
         public int getRows() {
-            var lock = gridLock.readLock();
+            long stamp = gridLock.tryOptimisticRead();
+
+            if (stamp != 0) {
+                int rows = inner.getRows();
+                if (gridLock.validate(stamp)) return rows;
+            }
+
+            stamp = gridLock.readLock();
+
             try {
                 return inner.getRows();
             } finally {
-                lock.unlock();
+                gridLock.unlockRead(stamp);
             }
         }
 
         @Override
         public int getColumns() {
-            var lock = gridLock.readLock();
+            long stamp = gridLock.tryOptimisticRead();
+
+            if (stamp != 0) {
+                int columns = inner.getColumns();
+                if (gridLock.validate(stamp)) return columns;
+            }
+
+            stamp = gridLock.readLock();
+
             try {
                 return inner.getColumns();
             } finally {
-                lock.unlock();
+                gridLock.unlockRead(stamp);
             }
         }
 
         @Override
         public long getSize() {
-            var lock = gridLock.readLock();
+            long stamp = gridLock.tryOptimisticRead();
+
+            if (stamp != 0) {
+                long size = inner.getSize();
+                if (gridLock.validate(stamp)) return size;
+            }
+
+            stamp = gridLock.readLock();
+
             try {
                 return inner.getSize();
             } finally {
-                lock.unlock();
+                gridLock.unlockRead(stamp);
             }
         }
     }
