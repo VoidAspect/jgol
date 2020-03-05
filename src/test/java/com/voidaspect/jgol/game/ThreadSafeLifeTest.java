@@ -178,9 +178,9 @@ class ThreadSafeLifeTest {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
-            if (Thread.interrupted()) {
-                log.error("sleep interrupted", e);
-            }
+            log.error("sleep interrupted", e);
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
         }
     }
 }

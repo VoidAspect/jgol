@@ -61,6 +61,7 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -78,6 +79,7 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
             if (progressPool.awaitTermination(TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS)) return;
             throw new RuntimeException(new TimeoutException("Could not shutdown executor after 10 seconds"));
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }
