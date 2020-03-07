@@ -9,6 +9,8 @@ plugins {
 group 'com.voidaspect'
 version '0.5.0'
 
+ext.moduleName = "${project.group}.${project.name}"
+
 java {
     sourceCompatibility = JavaVersion.VERSION_11
 }
@@ -21,6 +23,7 @@ javadoc.options.encoding = 'UTF-8'
 jar {
     manifest {
         attributes(
+                'Automatic-Module-Name': moduleName,
                 'Implementation-Title': project.name,
                 'Implementation-Version': project.version,
                 'Built-By': System.properties['user.name'],
