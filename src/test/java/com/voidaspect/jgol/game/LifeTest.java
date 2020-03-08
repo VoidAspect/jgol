@@ -22,6 +22,9 @@ class LifeTest {
 
     @Test
     void shouldPreventDoubleProxyOfGrid() {
+        when(grid.getRows()).thenReturn(100);
+        when(grid.getColumns()).thenReturn(100);
+        when(grid.getSize()).thenReturn(10_000L);
         var life = new Life(grid, strategy);
         var proxy = life.grid();
 

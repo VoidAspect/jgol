@@ -1,5 +1,6 @@
 package com.voidaspect.jgol.game;
 
+import com.voidaspect.jgol.grid.AbstractGrid;
 import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
@@ -58,7 +59,11 @@ final class Life extends AbstractLife {
         return ps.isFrozen();
     }
 
-    private final class MutationAwareGrid implements Grid {
+    private final class MutationAwareGrid extends AbstractGrid {
+
+        public MutationAwareGrid() {
+            super(inner.getRows(), inner.getColumns());
+        }
 
         private Grid inner() {
             return inner;
@@ -81,12 +86,7 @@ final class Life extends AbstractLife {
         }
 
         @Override
-        public boolean[][] snapshot() {
-            return inner.snapshot();
-        }
-
-        @Override
-        public boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns) {
+        protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
             return inner.snapshot(fromRow, fromColumn, rows, columns);
         }
 
@@ -96,20 +96,6 @@ final class Life extends AbstractLife {
             freeze();
         }
 
-        @Override
-        public int getRows() {
-            return inner.getRows();
-        }
-
-        @Override
-        public int getColumns() {
-            return inner.getColumns();
-        }
-
-        @Override
-        public long getSize() {
-            return inner.getSize();
-        }
     }
 
 }
