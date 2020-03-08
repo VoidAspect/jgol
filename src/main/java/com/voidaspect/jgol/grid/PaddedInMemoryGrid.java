@@ -79,7 +79,8 @@ public final class PaddedInMemoryGrid extends AbstractGrid {
         return grid[row][col] ? 1 : 0;
     }
 
-    private void fillGrid(boolean[][] initial) {
+    @Override
+    protected void fillGrid(boolean[][] initial) {
         if (initial == null) return;
         int rowsLength = Math.min(rows, initial.length);
         for (int i = 0; i < rowsLength; i++) {

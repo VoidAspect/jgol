@@ -18,7 +18,6 @@ public class NeighborCountingGrid extends AbstractGrid {
     public NeighborCountingGrid(boolean[][] initial, int rows, int cols) {
         this(rows, cols);
         fillGrid(initial);
-
     }
 
     @Override
@@ -95,16 +94,4 @@ public class NeighborCountingGrid extends AbstractGrid {
         }
     }
 
-    private void fillGrid(boolean[][] initial) {
-        if (initial == null) return;
-        int rowsLength = Math.min(rows, initial.length);
-        for (int r = 0; r < rowsLength; r++) {
-            boolean[] row = initial[r];
-            if (row == null) continue;
-            int columnLength = Math.min(cols, row.length);
-            for (int c = 0; c < columnLength; c++) {
-                set(r, c, initial[r][c]);
-            }
-        }
-    }
 }
