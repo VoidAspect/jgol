@@ -1,5 +1,6 @@
 package com.voidaspect.jgol.game;
 
+import com.voidaspect.jgol.grid.CellOperation;
 import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
@@ -100,11 +101,6 @@ abstract class ChunkedProgressStrategy implements ProgressStrategy {
             spawned.forEach((row, col) -> grid.set(row, col, true));
             died.forEach((row, col) -> grid.set(row, col, false));
         }
-    }
-
-    @FunctionalInterface
-    private interface CellOperation {
-        void apply(int row, int col);
     }
 
     /**
