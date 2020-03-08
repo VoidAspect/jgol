@@ -1,5 +1,6 @@
 package com.voidaspect.jgol;
 
+import com.voidaspect.jgol.grid.NeighborCountingGrid;
 import com.voidaspect.jgol.grid.PaddedInMemoryGrid;
 import com.voidaspect.jgol.listener.LoggingProgressListener;
 import com.voidaspect.jgol.listener.ProgressListener;
@@ -52,7 +53,7 @@ class GameOfLifeTest {
                 {true, true}
         };
         int generations = Integer.MAX_VALUE;
-        var game = GameOfLife.builder(new PaddedInMemoryGrid(initial, 20000, 20000)).build();
+        var game = GameOfLife.builder(new NeighborCountingGrid(initial, 20000, 20000)).build();
         assertFalse(game.isFrozen());
         while (generations-- > 0) {
             game.progress();
@@ -60,18 +61,20 @@ class GameOfLifeTest {
         assertTrue(game.isFrozen());
         assertArrayEquals(initial, game.grid().snapshot(0, 0, 2, 2));
 
-        game.grid().set(3, 0, true);
-        game.grid().set(3, 1, true);
+        game.grid().clear();
+
+        game.grid().set(0, 0, true);
+        game.grid().set(0, 1, true);
         assertFalse(game.isFrozen());
 
         boolean[][] expected = {{false, false}};
         game.progress(lpl);
         assertFalse(game.isFrozen());
-        assertArrayEquals(expected, game.grid().snapshot(3, 3, 1, 2));
+        assertArrayEquals(expected, game.grid().snapshot(0, 0, 1, 2));
 
         game.progress(lpl);
         assertTrue(game.isFrozen());
-        assertArrayEquals(expected, game.grid().snapshot(3, 3, 1, 2));
+        assertArrayEquals(expected, game.grid().snapshot(0, 0, 1, 2));
     }
 
     @Test

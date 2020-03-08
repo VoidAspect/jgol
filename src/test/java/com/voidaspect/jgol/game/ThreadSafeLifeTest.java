@@ -14,12 +14,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class ThreadSafeLifeTest {
 
     private static final Logger log = LoggerFactory.getLogger(ThreadSafeLifeTest.class);
+
+    private static final int DEFAULT_GRID_SIDE = 100;
+
+    public static final long DEFAULT_SIZE = (long) DEFAULT_GRID_SIDE * DEFAULT_GRID_SIDE;
 
     private ThreadSafeLife subject;
 
@@ -30,6 +34,9 @@ class ThreadSafeLifeTest {
     @BeforeEach
     void setUp() {
         grid = mock(Grid.class);
+        when(grid.getColumns()).thenReturn(DEFAULT_GRID_SIDE);
+        when(grid.getRows()).thenReturn(DEFAULT_GRID_SIDE);
+        when(grid.getSize()).thenReturn(DEFAULT_SIZE);
         delegate = mock(AbstractLife.class);
         when(delegate.grid()).thenReturn(grid);
         subject = ThreadSafeLife.of(delegate);
@@ -102,7 +109,7 @@ class ThreadSafeLifeTest {
         int maxThreads = getMaxThreads();
         var executor = Executors.newFixedThreadPool(maxThreads);
 
-        assertTimeout(Duration.ofMillis(150), () -> {
+        assertTimeout(Duration.ofMillis(200), () -> {
             var futures = Stream.generate(() -> executor.submit(() -> {
                 sleep(100);
                 return subject.grid().get(0, 0);
@@ -124,7 +131,7 @@ class ThreadSafeLifeTest {
         int maxThreads = getMaxThreads();
         var executor = Executors.newFixedThreadPool(maxThreads);
 
-        assertTimeout(Duration.ofMillis(150), () -> {
+        assertTimeout(Duration.ofMillis(200), () -> {
             var futures = Stream.generate(() -> executor.submit(() -> {
                 sleep(100);
                 subject.grid().set(0, 0, true);
@@ -145,7 +152,7 @@ class ThreadSafeLifeTest {
         when(delegate.isFrozen()).thenReturn(false);
         when(grid.get(0, 0)).thenReturn(true);
         doAnswer(invocation -> {
-            sleep(1000);
+            sleep(300);
             when(grid.get(0, 0)).thenReturn(false);
             return null;
         }).when(delegate).nextGen(any());
@@ -153,7 +160,7 @@ class ThreadSafeLifeTest {
         int readers = Math.max(getMaxThreads() - 1, 1);
         var executor = Executors.newFixedThreadPool(readers);
 
-        assertTimeout(Duration.ofMillis(1200), () -> {
+        assertTimeout(Duration.ofMillis(500), () -> {
             var futures = Stream.generate(() -> executor.submit(() -> {
                 sleep(100);
                 return subject.grid().get(0, 0);
@@ -181,6 +188,19 @@ class ThreadSafeLifeTest {
             log.error("sleep interrupted", e);
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
+        }
+    }
+
+    static class ThreadSafeGridTest extends LifeTest.LifeGridTest {
+
+        @Override
+        AbstractLife getGame(int rows, int cols) {
+            return ThreadSafeLife.of(super.getGame(rows, cols));
+        }
+
+        @Override
+        AbstractLife getGame(boolean[][] initial, int rows, int cols) {
+            return ThreadSafeLife.of(super.getGame(initial, rows, cols));
         }
     }
 }

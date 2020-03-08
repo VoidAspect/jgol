@@ -1,5 +1,6 @@
 package com.voidaspect.jgol.game;
 
+import com.voidaspect.jgol.grid.AbstractGrid;
 import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
@@ -190,7 +191,11 @@ final class ThreadSafeLife extends AbstractLife {
     /**
      * Thread-safe view of a {@link Grid} object. Uses read-write locking.
      */
-    private final class ThreadSafeGrid implements Grid {
+    private final class ThreadSafeGrid extends AbstractGrid {
+
+        public ThreadSafeGrid() {
+            super(inner.getRows(), inner.getColumns());
+        }
 
         @Override
         public boolean get(int row, int col) {
@@ -262,17 +267,7 @@ final class ThreadSafeLife extends AbstractLife {
         }
 
         @Override
-        public boolean[][] snapshot() {
-            long stamp = gridLock.readLock();
-            try {
-                return inner.snapshot();
-            } finally {
-                gridLock.unlockRead(stamp);
-            }
-        }
-
-        @Override
-        public boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns) {
+        protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
             long stamp = gridLock.readLock();
             try {
                 return inner.snapshot(fromRow, fromColumn, rows, columns);
@@ -288,60 +283,6 @@ final class ThreadSafeLife extends AbstractLife {
                 inner.clear();
             } finally {
                 gridLock.unlockWrite(stamp);
-            }
-        }
-
-        @Override
-        public int getRows() {
-            long stamp = gridLock.tryOptimisticRead();
-
-            if (stamp != 0) {
-                int rows = inner.getRows();
-                if (gridLock.validate(stamp)) return rows;
-            }
-
-            stamp = gridLock.readLock();
-
-            try {
-                return inner.getRows();
-            } finally {
-                gridLock.unlockRead(stamp);
-            }
-        }
-
-        @Override
-        public int getColumns() {
-            long stamp = gridLock.tryOptimisticRead();
-
-            if (stamp != 0) {
-                int columns = inner.getColumns();
-                if (gridLock.validate(stamp)) return columns;
-            }
-
-            stamp = gridLock.readLock();
-
-            try {
-                return inner.getColumns();
-            } finally {
-                gridLock.unlockRead(stamp);
-            }
-        }
-
-        @Override
-        public long getSize() {
-            long stamp = gridLock.tryOptimisticRead();
-
-            if (stamp != 0) {
-                long size = inner.getSize();
-                if (gridLock.validate(stamp)) return size;
-            }
-
-            stamp = gridLock.readLock();
-
-            try {
-                return inner.getSize();
-            } finally {
-                gridLock.unlockRead(stamp);
             }
         }
     }
