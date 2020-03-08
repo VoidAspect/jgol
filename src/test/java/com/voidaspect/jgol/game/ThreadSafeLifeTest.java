@@ -21,6 +21,10 @@ class ThreadSafeLifeTest {
 
     private static final Logger log = LoggerFactory.getLogger(ThreadSafeLifeTest.class);
 
+    private static final int DEFAULT_GRID_SIDE = 100;
+
+    public static final long DEFAULT_SIZE = (long) DEFAULT_GRID_SIDE * DEFAULT_GRID_SIDE;
+
     private ThreadSafeLife subject;
 
     private AbstractLife delegate;
@@ -30,6 +34,9 @@ class ThreadSafeLifeTest {
     @BeforeEach
     void setUp() {
         grid = mock(Grid.class);
+        when(grid.getColumns()).thenReturn(DEFAULT_GRID_SIDE);
+        when(grid.getRows()).thenReturn(DEFAULT_GRID_SIDE);
+        when(grid.getSize()).thenReturn(DEFAULT_SIZE);
         delegate = mock(AbstractLife.class);
         when(delegate.grid()).thenReturn(grid);
         subject = ThreadSafeLife.of(delegate);
