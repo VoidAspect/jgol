@@ -93,7 +93,6 @@ class GameOfLifeBuilderTest {
         assertTrue(builder.isParallel());
 
         assertEquals(ParallelProgressStrategy.class, builder.chooseProgressStrategy().getClass());
-        assertEquals(200, builder.getChunks());
 
         var life = builder.build();
         life.finish();
@@ -148,7 +147,6 @@ class GameOfLifeBuilderTest {
 
         var builder = new GameOfLifeBuilder(grid);
         assertEquals(1_000_000, builder.getChunkWidth() * builder.getChunkHeight());
-        assertEquals(2, builder.getChunks());
     }
 
     @Test

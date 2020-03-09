@@ -48,8 +48,6 @@ abstract class ChunkedProgressStrategy implements ProgressStrategy {
     abstract int progressAndCountUpdates(Grid grid, CellListener listener);
 
     final NextGen progressChunk(Grid grid, CellListener listener, int fromRow, int fromCol, int toRow, int toCol) {
-        toRow = Math.min(grid.getColumns(), toRow);
-        toCol = Math.min(grid.getRows(), toCol);
         var ng = new NextGen(grid);
         for (int row = fromRow; row < toRow; row++) {
             for (int col = fromCol; col < toCol; col++) {

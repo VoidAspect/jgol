@@ -80,7 +80,7 @@ class GameOfLifeTest {
     @Test
     void shouldProgressOnLargeEmptyGrid() {
         int side = 20_000;
-        var grid = new PaddedInMemoryGrid(side, side);
+        var grid = new NeighborCountingGrid(side, side);
         var game = GameOfLife.builder(grid).build();
         game.progress();
     }
@@ -423,7 +423,7 @@ class GameOfLifeTest {
                 b[i][j] = grid[i][j] != 0;
             }
         }
-        var inMemoryGrid = new PaddedInMemoryGrid(b, rows, columns);
+        var inMemoryGrid = new NeighborCountingGrid(b, rows, columns);
         assertEquals(rows, inMemoryGrid.getRows());
         assertEquals(columns, inMemoryGrid.getColumns());
         var game = GameOfLife.builder(inMemoryGrid).build();

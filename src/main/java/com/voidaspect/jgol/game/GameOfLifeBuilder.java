@@ -45,25 +45,13 @@ public class GameOfLifeBuilder {
     protected ProgressStrategy chooseProgressStrategy() {
         final ProgressStrategy ps;
         if (isParallel()) {
-            int chunks = getChunks();
             boolean keepPoolAlive = shouldKeepPoolAlive();
-            var progressPool = getProgressExecutor().orElseGet(() -> Executors
-                    // by default, progress strategy will maintain a fixed thread pool.
-                    // Threads are released upon termination.
-                    .newFixedThreadPool(Math.min(chunks, Runtime.getRuntime().availableProcessors())));
-            ps = new ParallelProgressStrategy(progressPool, keepPoolAlive, chunkHeight, chunkWidth, chunks);
+            var progressPool = getProgressExecutor().orElseGet(this::defaultProgressExecutor);
+            ps = new ParallelProgressStrategy(progressPool, keepPoolAlive, chunkHeight, chunkWidth);
         } else {
             ps = new AllAtOnceProgressStrategy();
         }
         return ps;
-    }
-
-    public int getChunks() {
-        long size = grid.getSize();
-        int chunkSize = chunkWidth * chunkHeight;
-        int chunks = (int) (size / chunkSize);
-        // number of chunks should be large enough to cover all cells
-        return chunks * chunkSize < size ? chunks + 1 : chunks;
     }
 
     public int getChunkHeight() {
@@ -145,4 +133,11 @@ public class GameOfLifeBuilder {
         this.keepPoolAlive = keepPoolAlive;
         return this;
     }
+
+    private ExecutorService defaultProgressExecutor() {
+        // by default, progress strategy will maintain a fixed thread pool.
+        // Threads are released upon termination.
+        return Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    }
+
 }

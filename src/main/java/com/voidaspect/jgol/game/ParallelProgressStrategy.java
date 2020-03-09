@@ -18,46 +18,38 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
 
     private final int chunkWidth;
 
-    private final int chunks;
-
     ParallelProgressStrategy(
             ExecutorService progressPool,
             boolean keepPoolAlive,
             int chunkHeight,
-            int chunkWidth,
-            int chunks
+            int chunkWidth
     ) {
         this.progressPool = progressPool;
         this.keepPoolAlive = keepPoolAlive;
         this.chunkHeight = chunkHeight;
         this.chunkWidth = chunkWidth;
-        this.chunks = chunks;
     }
 
     @Override
     int progressAndCountUpdates(Grid grid, CellListener listener) {
         int rows = grid.getRows();
-        int columns = grid.getColumns();
-        var progressTasks = new ArrayList<Callable<NextGen>>(chunks);
+        int cols = grid.getColumns();
+        var progressTasks = new ArrayList<Callable<NextGen>>();
         for (int row = 0; row < rows; row += chunkHeight) {
-            for (int col = 0; col < columns; col += chunkWidth) {
+            for (int col = 0; col < cols; col += chunkWidth) {
                 int fromRow = row;
                 int fromCol = col;
-                int toRow = fromRow + chunkHeight;
-                int toCol = fromCol + chunkWidth;
+                int toRow = Math.min(rows, fromRow + chunkHeight);
+                int toCol = Math.min(cols, fromCol + chunkWidth);
                 progressTasks.add(() -> progressChunk(grid, listener, fromRow, fromCol, toRow, toCol));
             }
         }
         int updates = 0;
         try {
-            var gridUpdates = new ArrayList<Callable<Void>>(chunks);
             for (var chunk : progressPool.invokeAll(progressTasks)) {
                 var nextGen = chunk.get();
                 updates += nextGen.countUpdates();
-                gridUpdates.add(gridUpdate(nextGen));
-            }
-            for (var update : progressPool.invokeAll(gridUpdates)) {
-                update.get();
+                nextGen.updateGrid();
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -84,10 +76,4 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
         }
     }
 
-    private Callable<Void> gridUpdate(NextGen nextGen) {
-        return () -> {
-            nextGen.updateGrid();
-            return null;
-        };
-    }
 }
