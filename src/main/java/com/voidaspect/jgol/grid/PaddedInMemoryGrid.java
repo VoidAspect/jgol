@@ -27,6 +27,31 @@ public final class PaddedInMemoryGrid extends AbstractGrid {
     }
 
     @Override
+    protected void fillGrid(boolean[][] initial) {
+        if (initial == null) return;
+        int rowsLength = Math.min(rows, initial.length);
+        for (int i = 0; i < rowsLength; i++) {
+            boolean[] row = initial[i];
+            if (row == null) continue;
+            int columnLength = Math.min(cols, row.length);
+            System.arraycopy(row, 0, grid[PADDING + i], PADDING, columnLength);
+        }
+    }
+
+    @Override
+    protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
+        boolean[][] snapshot = new boolean[rows][];
+        fromColumn += PADDING;
+        fromRow += PADDING;
+        int toColumn = fromColumn + columns;
+        for (int i = 0; i < rows; i++) {
+            boolean[] row = grid[i + fromRow];
+            snapshot[i] = Arrays.copyOfRange(row, fromColumn, toColumn);
+        }
+        return snapshot;
+    }
+
+    @Override
     public boolean get(int row, int col) {
         // don't perform range checks, edges are always false
         return grid[PADDING + row][PADDING + col];
@@ -55,19 +80,6 @@ public final class PaddedInMemoryGrid extends AbstractGrid {
     }
 
     @Override
-    protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
-        boolean[][] snapshot = new boolean[rows][];
-        fromColumn += PADDING;
-        fromRow += PADDING;
-        int toColumn = fromColumn + columns;
-        for (int i = 0; i < rows; i++) {
-            boolean[] row = grid[i + fromRow];
-            snapshot[i] = Arrays.copyOfRange(row, fromColumn, toColumn);
-        }
-        return snapshot;
-    }
-
-    @Override
     public void clear() {
         var empty = grid[0];
         for (int i = PADDING; i < upperRowBound; i++) {
@@ -75,20 +87,12 @@ public final class PaddedInMemoryGrid extends AbstractGrid {
         }
     }
 
-    private int value(int row, int col) {
-        return grid[row][col] ? 1 : 0;
-    }
+    private static final byte ALIVE = 1;
 
-    @Override
-    protected void fillGrid(boolean[][] initial) {
-        if (initial == null) return;
-        int rowsLength = Math.min(rows, initial.length);
-        for (int i = 0; i < rowsLength; i++) {
-            boolean[] row = initial[i];
-            if (row == null) continue;
-            int columnLength = Math.min(cols, row.length);
-            System.arraycopy(row, 0, grid[PADDING + i], PADDING, columnLength);
-        }
+    private static final byte DEAD = 0;
+
+    private byte value(int row, int col) {
+        return grid[row][col] ? ALIVE : DEAD;
     }
 
 }

@@ -24,7 +24,16 @@ public abstract class AbstractGrid implements Grid {
         this.size = (long) rows * cols;
     }
 
-    protected abstract boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns);
+    protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
+        var snapshot = new boolean[rows][columns];
+        for (int row = fromRow; row < rows; row++) {
+            boolean[] snapshotRow = snapshot[row - fromRow];
+            for (int col = fromColumn; col < columns; col++) {
+                snapshotRow[col - fromColumn] = get(row, col);
+            }
+        }
+        return snapshot;
+    }
 
     @Override
     public final boolean[][] snapshot() {
@@ -53,6 +62,15 @@ public abstract class AbstractGrid implements Grid {
         return size;
     }
 
+    @Override
+    public void clear() {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                set(row, col, false);
+            }
+        }
+    }
+
     protected void fillGrid(boolean[][] initial) {
         if (initial == null) return;
         int rowsLength = Math.min(rows, initial.length);
@@ -65,4 +83,5 @@ public abstract class AbstractGrid implements Grid {
             }
         }
     }
+
 }

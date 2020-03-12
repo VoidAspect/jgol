@@ -21,18 +21,6 @@ public class NeighborCountingGrid extends AbstractGrid {
     }
 
     @Override
-    protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
-        var snapshot = new boolean[rows][columns];
-        for (int row = fromRow; row < rows; row++) {
-            boolean[] snapshotRow = snapshot[row - fromRow];
-            for (int col = fromColumn; col < columns; col++) {
-                snapshotRow[col - fromColumn] = get(row, col);
-            }
-        }
-        return snapshot;
-    }
-
-    @Override
     public boolean get(int row, int col) {
         return (grid[row][col] & ALIVE_MASK) != 0;
     }
@@ -41,15 +29,13 @@ public class NeighborCountingGrid extends AbstractGrid {
     public void set(int row, int col, boolean state) {
         if (get(row, col) == state) return;
 
-        if (state) {
-            grid[row][col] |= ALIVE_MASK;
-        } else {
-            grid[row][col] ^= ALIVE_MASK;
-        }
+        var thisRow = grid[row];
 
-        CellOperation operation = state
-                ? (r, c) -> grid[r][c] += ALIVE_NEIGHBOR
-                : (r, c) -> grid[r][c] -= ALIVE_NEIGHBOR;
+        if (state) {
+            thisRow[col] |= ALIVE_MASK;
+        } else {
+            thisRow[col] &= ~ALIVE_MASK;
+        }
 
         //@formatter:off
         int up    = row - 1;
@@ -63,20 +49,26 @@ public class NeighborCountingGrid extends AbstractGrid {
         boolean notDownEdge  = down < rows;
         //@formatter:on
 
+        int update = state ? ALIVE_NEIGHBOR : -ALIVE_NEIGHBOR;
+
         // up row
         if (notTopEdge) {
-            if (notLeftEdge) operation.apply(up, left);
-            operation.apply(up, col);
-            if (notRightEdge) operation.apply(up, right);
+            var upRow = grid[up];
+
+            if (notLeftEdge) upRow[left] += update;
+            upRow[col] += update;
+            if (notRightEdge) upRow[right] += update;
         }
         // middle row
-        if (notLeftEdge) operation.apply(row, left);
-        if (notRightEdge) operation.apply(row, right);
+        if (notLeftEdge) thisRow[left] += update;
+        if (notRightEdge) thisRow[right] += update;
         // down row
         if (notDownEdge) {
-            if (notLeftEdge) operation.apply(down, left);
-            operation.apply(down, col);
-            if (notRightEdge) operation.apply(down, right);
+            var downRow = grid[down];
+
+            if (notLeftEdge) downRow[left] += update;
+            downRow[col] += update;
+            if (notRightEdge) downRow[right] += update;
         }
     }
 
