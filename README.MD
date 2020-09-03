@@ -13,7 +13,7 @@ Actual implementation is flexibly configured via `com.voidaspect.jgol.game.GameO
 It supports optional thread safety as well as parallel calculation of next generation.
 
 Parallel progression is implemented by splitting the grid into chunks and dividing those between threads.
-It is used used upon the number of cells reaching the `parallelizationThreshold`, which is, by default, equal to
+It is used when the number of cells reaches the `parallelizationThreshold`, which is, by default, equal to
 **1 000 000 (1 million)**.
 
 Each chunk, by default, is a **square 1000x1000** region of the grid.
