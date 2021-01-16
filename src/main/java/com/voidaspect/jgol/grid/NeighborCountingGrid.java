@@ -2,7 +2,7 @@ package com.voidaspect.jgol.grid;
 
 import java.util.Arrays;
 
-public class NeighborCountingGrid extends AbstractGrid {
+public class NeighborCountingGrid extends AbstractFiniteGrid {
 
     private static final byte ALIVE_MASK = 1;
 
@@ -27,15 +27,13 @@ public class NeighborCountingGrid extends AbstractGrid {
 
     @Override
     public void set(int row, int col, boolean state) {
-        if (get(row, col) == state) return;
-
         var thisRow = grid[row];
 
-        if (state) {
-            thisRow[col] |= ALIVE_MASK;
-        } else {
-            thisRow[col] &= ~ALIVE_MASK;
-        }
+        boolean alive = (thisRow[col] & ALIVE_MASK) != 0;
+
+        if (alive == state) return;
+
+        thisRow[col] ^= ALIVE_MASK;
 
         //@formatter:off
         int up    = row - 1;

@@ -1,7 +1,7 @@
 package com.voidaspect.jgol.game;
 
 import com.voidaspect.jgol.grid.Grid;
-import com.voidaspect.jgol.grid.GridTest;
+import com.voidaspect.jgol.grid.FiniteGridTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,7 +38,7 @@ class LifeTest {
         assertNotSame(grid, life.grid());
     }
 
-    static class LifeGridTest extends GridTest {
+    static class LifeGridTest extends FiniteGridTest {
 
         @Override
         protected Grid grid(int rows, int cols) {

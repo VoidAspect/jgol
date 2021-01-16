@@ -1,5 +1,6 @@
 package com.voidaspect.jgol;
 
+import com.voidaspect.jgol.grid.BitVectorInMemoryGrid;
 import com.voidaspect.jgol.grid.NeighborCountingGrid;
 import com.voidaspect.jgol.grid.PaddedInMemoryGrid;
 import com.voidaspect.jgol.listener.LoggingProgressListener;
@@ -28,12 +29,12 @@ class GameOfLifeTest {
         });
         game.progress(progressListener);
 
-        verify(progressListener, times(1)).onProgressStart();
-        verify(progressListener, times(1)).onProgressFinish();
-        verify(progressListener, times(1)).onCellSpawned(1, 2);
-        verify(progressListener, times(1)).onCellSpawned(3, 2);
-        verify(progressListener, times(1)).onCellDied(2, 1);
-        verify(progressListener, times(1)).onCellDied(2, 3);
+        verify(progressListener).onProgressStart();
+        verify(progressListener).onProgressFinish();
+        verify(progressListener).onCellSpawned(1, 2);
+        verify(progressListener).onCellSpawned(3, 2);
+        verify(progressListener).onCellDied(2, 1);
+        verify(progressListener).onCellDied(2, 3);
         verifyNoMoreInteractions(progressListener);
     }
 
@@ -80,7 +81,7 @@ class GameOfLifeTest {
     @Test
     void shouldProgressOnLargeEmptyGrid() {
         int side = 20_000;
-        var grid = new NeighborCountingGrid(side, side);
+        var grid = new BitVectorInMemoryGrid(side, side);
         var game = GameOfLife.builder(grid).build();
         game.progress();
     }
@@ -423,7 +424,7 @@ class GameOfLifeTest {
                 b[i][j] = grid[i][j] != 0;
             }
         }
-        var inMemoryGrid = new NeighborCountingGrid(b, rows, columns);
+        var inMemoryGrid = new BitVectorInMemoryGrid(b, rows, columns);
         assertEquals(rows, inMemoryGrid.getRows());
         assertEquals(columns, inMemoryGrid.getColumns());
         var game = GameOfLife.builder(inMemoryGrid).build();

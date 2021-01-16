@@ -3,7 +3,7 @@ package com.voidaspect.jgol.grid;
 import java.util.Arrays;
 import java.util.Objects;
 
-public final class PaddedInMemoryGrid extends AbstractGrid {
+public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
 
     private static final int PADDING = 1;
 

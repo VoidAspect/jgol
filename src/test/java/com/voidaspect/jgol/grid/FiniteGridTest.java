@@ -2,9 +2,14 @@ package com.voidaspect.jgol.grid;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public abstract class GridTest {
+public abstract class FiniteGridTest {
 
     @Test
     void shouldNotAllowInvalidGrids() {
@@ -132,6 +137,50 @@ public abstract class GridTest {
         };
         grid.clear();
         assertArrayEquals(expected, grid.snapshot());
+    }
+
+    @Test
+    void shouldIterateOverLiveCells() {
+        var grid = grid(new boolean[][] {
+                {true, false, true},
+                {false, false, false},
+                {true, true, true}
+        }, 3, 3);
+
+        Map<Integer, Set<Integer>> alive = new HashMap<>();
+
+        grid.forEachAlive(((row, col) -> alive.compute(row, (key, value) -> {
+            if (value == null) value = new HashSet<>();
+            value.add(col);
+            return value;
+        })));
+
+        assertEquals(Map.of(
+                0, Set.of(0, 2),
+                2, Set.of(0, 1, 2)
+        ), alive);
+    }
+
+    @Test
+    void shouldIterateOverLiveCellsInRange() {
+        var grid = grid(new boolean[][] {
+                {true, false, true},
+                {false, true, false},
+                {true, true, true}
+        }, 3, 3);
+
+        Map<Integer, Set<Integer>> alive = new HashMap<>();
+
+        grid.forEachAlive(1, 1, 3, 3, ((row, col) -> alive.compute(row, (key, value) -> {
+            if (value == null) value = new HashSet<>();
+            value.add(col);
+            return value;
+        })));
+
+        assertEquals(Map.of(
+                1, Set.of(1),
+                2, Set.of(1, 2)
+        ), alive);
     }
 
     protected abstract Grid grid(int rows, int cols);

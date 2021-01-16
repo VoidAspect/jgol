@@ -5,9 +5,10 @@ import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-abstract class ChunkedProgressStrategy implements ProgressStrategy {
+abstract class AbstractProgressStrategy implements ProgressStrategy {
 
     private final AtomicBoolean frozen = new AtomicBoolean();
 
@@ -47,26 +48,47 @@ abstract class ChunkedProgressStrategy implements ProgressStrategy {
 
     abstract int progressAndCountUpdates(Grid grid, CellListener listener);
 
-    final NextGen progressChunk(Grid grid, CellListener listener, int fromRow, int fromCol, int toRow, int toCol) {
-        var ng = new NextGen(grid);
-        for (int row = fromRow; row < toRow; row++) {
-            for (int col = fromCol; col < toCol; col++) {
-                int neighbors = grid.neighbors(row, col);
-                // depending on whether the cell is alive
-                if (grid.get(row, col)) {
-                    if (neighbors < 2 || neighbors > 3) {
-                        // overcrowding or underpopulation
-                        ng.willDie(row, col);
-                        listener.onCellDied(row, col);
-                    }
-                } else if (neighbors == 3) {
-                    // reproduction
-                    ng.willSpawn(row, col);
-                    listener.onCellSpawned(row, col);
-                }
-            }
+    static long cell(int row, int col) {
+        return (long) row << 32 | col & 0xffffffffL;
+    }
+
+    final void nextLiveCell(Grid grid, CellListener listener, NextGen ng, Set<Long> visited, int row, int col) {
+        int neighbors = grid.neighbors(row, col);
+
+        if (neighbors < 2 || neighbors > 3) {
+            // overcrowding or underpopulation
+            ng.willDie(row, col);
+            listener.onCellDied(row, col);
         }
-        return ng;
+
+        //@formatter:off
+        int up    = row - 1;
+        int down  = row + 1;
+        int left  = col - 1;
+        int right = col + 1;
+        eval(grid, ng, listener, visited, up,   left); eval(grid, ng, listener, visited, up,   col); eval(grid, ng, listener, visited, up,   right);
+        eval(grid, ng, listener, visited, row,  left); /*                this cell                */ eval(grid, ng, listener, visited, row,  right);
+        eval(grid, ng, listener, visited, down, left); eval(grid, ng, listener, visited, down, col); eval(grid, ng, listener, visited, down, right);
+        //@formatter:on
+    }
+
+    private void eval(Grid grid,
+                      NextGen ng,
+                      CellListener listener,
+                      Set<Long> visited,
+                      int row,
+                      int col) {
+
+        if (!grid.hasCell(row, col) || grid.get(row, col)) return;
+        if (!visited.add(cell(row, col))) return;
+
+        int neighbors = grid.neighbors(row, col);
+
+        if (neighbors == 3) {
+            // reproduction
+            ng.willSpawn(row, col);
+            listener.onCellSpawned(row, col);
+        }
     }
 
     static final class NextGen {

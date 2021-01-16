@@ -4,9 +4,10 @@ import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.concurrent.*;
 
-final class ParallelProgressStrategy extends ChunkedProgressStrategy {
+final class ParallelProgressStrategy extends AbstractProgressStrategy {
 
     private static final int TERMINATION_TIMEOUT_SECONDS = 10;
 
@@ -35,13 +36,14 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
         int rows = grid.getRows();
         int cols = grid.getColumns();
         var progressTasks = new ArrayList<Callable<NextGen>>();
+        Set<Long> visited = ConcurrentHashMap.newKeySet();
         for (int row = 0; row < rows; row += chunkHeight) {
             for (int col = 0; col < cols; col += chunkWidth) {
                 int fromRow = row;
                 int fromCol = col;
                 int toRow = Math.min(rows, fromRow + chunkHeight);
                 int toCol = Math.min(cols, fromCol + chunkWidth);
-                progressTasks.add(() -> progressChunk(grid, listener, fromRow, fromCol, toRow, toCol));
+                progressTasks.add(() -> progressChunk(grid, listener, visited, fromRow, fromCol, toRow, toCol));
             }
         }
         int updates = 0;
@@ -58,6 +60,13 @@ final class ParallelProgressStrategy extends ChunkedProgressStrategy {
             throw new RuntimeException(e);
         }
         return updates;
+    }
+
+
+    private NextGen progressChunk(Grid grid, CellListener listener, Set<Long> visited, int fromRow, int fromCol, int toRow, int toCol) {
+        var ng = new NextGen(grid);
+        grid.forEachAlive(fromRow, fromCol, toRow, toCol, (row, col) -> nextLiveCell(grid, listener, ng, visited, row, col));
+        return ng;
     }
 
     @Override

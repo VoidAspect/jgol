@@ -3,13 +3,17 @@ package com.voidaspect.jgol.game;
 import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
-final class AllAtOnceProgressStrategy extends ChunkedProgressStrategy {
+import java.util.HashSet;
+
+final class AllAtOnceProgressStrategy extends AbstractProgressStrategy {
 
     @Override
     int progressAndCountUpdates(Grid grid, CellListener listener) {
-        var nextGen = progressChunk(grid, listener, 0, 0, grid.getRows(), grid.getColumns());
-        nextGen.updateGrid();
-        return nextGen.countUpdates();
+        var ng = new NextGen(grid);
+        var visited = new HashSet<Long>();
+        grid.forEachAlive((row, col) -> nextLiveCell(grid, listener, ng, visited, row, col));
+        ng.updateGrid();
+        return ng.countUpdates();
     }
 
 }

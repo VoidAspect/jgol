@@ -1,6 +1,6 @@
 package com.voidaspect.jgol.game;
 
-import com.voidaspect.jgol.grid.AbstractGrid;
+import com.voidaspect.jgol.grid.AbstractFiniteGrid;
 import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
@@ -59,7 +59,7 @@ final class Life extends AbstractLife {
         return ps.isFrozen();
     }
 
-    private final class MutationAwareGrid extends AbstractGrid {
+    private final class MutationAwareGrid extends AbstractFiniteGrid {
 
         public MutationAwareGrid() {
             super(inner.getRows(), inner.getColumns());

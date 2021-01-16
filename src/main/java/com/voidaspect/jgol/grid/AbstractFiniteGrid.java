@@ -2,7 +2,7 @@ package com.voidaspect.jgol.grid;
 
 import java.util.Objects;
 
-public abstract class AbstractGrid implements Grid {
+public abstract class AbstractFiniteGrid implements Grid {
 
     public static final int MIN_SIZE = 1;
 
@@ -12,7 +12,7 @@ public abstract class AbstractGrid implements Grid {
 
     protected final long size;
 
-    public AbstractGrid(int rows, int cols) {
+    public AbstractFiniteGrid(int rows, int cols) {
         if (rows < MIN_SIZE) {
             throw new IllegalArgumentException("Number of rows expected >= 1, got " + rows);
         }
@@ -63,10 +63,39 @@ public abstract class AbstractGrid implements Grid {
     }
 
     @Override
+    public boolean hasCell(int row, int col) {
+        return row >= 0 && row < rows && col >= 0 && col < cols;
+    }
+
+    @Override
     public void clear() {
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 set(row, col, false);
+            }
+        }
+    }
+
+    @Override
+    public void forEachAlive(CellOperation operation) {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (get(row, col)) {
+                    operation.apply(row, col);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void forEachAlive(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
+        Objects.checkFromToIndex(fromRow, toRow, rows);
+        Objects.checkFromToIndex(fromColumn, toCol, cols);
+        for (int row = fromRow; row < toRow; row++) {
+            for (int col = fromColumn; col < toCol; col++) {
+                if (get(row, col)) {
+                    operation.apply(row, col);
+                }
             }
         }
     }

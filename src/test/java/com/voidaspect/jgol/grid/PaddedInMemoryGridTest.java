@@ -1,6 +1,6 @@
 package com.voidaspect.jgol.grid;
 
-class PaddedInMemoryGridTest extends GridTest {
+class PaddedInMemoryGridTest extends FiniteGridTest {
 
     @Override
     protected Grid grid(int rows, int cols) {

@@ -1,6 +1,6 @@
 package com.voidaspect.jgol.game;
 
-import com.voidaspect.jgol.grid.AbstractGrid;
+import com.voidaspect.jgol.grid.AbstractFiniteGrid;
 import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
@@ -191,7 +191,7 @@ final class ThreadSafeLife extends AbstractLife {
     /**
      * Thread-safe view of a {@link Grid} object. Uses read-write locking.
      */
-    private final class ThreadSafeGrid extends AbstractGrid {
+    private final class ThreadSafeGrid extends AbstractFiniteGrid {
 
         public ThreadSafeGrid() {
             super(inner.getRows(), inner.getColumns());

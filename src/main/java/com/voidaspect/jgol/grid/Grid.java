@@ -20,4 +20,10 @@ public interface Grid {
 
     long getSize();
 
+    boolean hasCell(int row, int col);
+
+    void forEachAlive(CellOperation operation);
+
+    void forEachAlive(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation);
+
 }
