@@ -64,8 +64,8 @@ final class ParallelProgressStrategy extends AbstractProgressStrategy {
 
 
     private NextGen progressChunk(Grid grid, CellListener listener, Set<Long> visited, int fromRow, int fromCol, int toRow, int toCol) {
-        var ng = new NextGen(grid);
-        grid.forEachAlive(fromRow, fromCol, toRow, toCol, (row, col) -> nextLiveCell(grid, listener, ng, visited, row, col));
+        var ng = new NextGen(grid, listener, visited);
+        grid.forEachAlive(fromRow, fromCol, toRow, toCol, ng::nextLiveCell);
         return ng;
     }
 

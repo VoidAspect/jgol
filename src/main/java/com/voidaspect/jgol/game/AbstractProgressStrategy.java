@@ -5,6 +5,7 @@ import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -48,73 +49,78 @@ abstract class AbstractProgressStrategy implements ProgressStrategy {
 
     abstract int progressAndCountUpdates(Grid grid, CellListener listener);
 
-    static long cell(int row, int col) {
-        return (long) row << 32 | col & 0xffffffffL;
-    }
-
-    final void nextLiveCell(Grid grid, CellListener listener, NextGen ng, Set<Long> visited, int row, int col) {
-        int neighbors = grid.neighbors(row, col);
-
-        if (neighbors < 2 || neighbors > 3) {
-            // overcrowding or underpopulation
-            ng.willDie(row, col);
-            listener.onCellDied(row, col);
-        }
-
-        //@formatter:off
-        int up    = row - 1;
-        int down  = row + 1;
-        int left  = col - 1;
-        int right = col + 1;
-        eval(grid, ng, listener, visited, up,   left); eval(grid, ng, listener, visited, up,   col); eval(grid, ng, listener, visited, up,   right);
-        eval(grid, ng, listener, visited, row,  left); /*                this cell                */ eval(grid, ng, listener, visited, row,  right);
-        eval(grid, ng, listener, visited, down, left); eval(grid, ng, listener, visited, down, col); eval(grid, ng, listener, visited, down, right);
-        //@formatter:on
-    }
-
-    private void eval(Grid grid,
-                      NextGen ng,
-                      CellListener listener,
-                      Set<Long> visited,
-                      int row,
-                      int col) {
-
-        if (!grid.hasCell(row, col) || grid.get(row, col)) return;
-        if (!visited.add(cell(row, col))) return;
-
-        int neighbors = grid.neighbors(row, col);
-
-        if (neighbors == 3) {
-            // reproduction
-            ng.willSpawn(row, col);
-            listener.onCellSpawned(row, col);
-        }
-    }
-
     static final class NextGen {
 
         final Grid grid;
+
+        final CellListener listener;
+
+        final Set<Long> visitedDeadNeighbors;
 
         final CellBag spawned;
 
         final CellBag died;
 
-        NextGen(Grid grid) {
+        NextGen(Grid grid, CellListener listener) {
+            this(grid, listener, new HashSet<>());
+        }
+
+        NextGen(Grid grid, CellListener listener, Set<Long> visitedDeadNeighbors) {
             this.grid = grid;
+            this.listener = listener;
+            this.visitedDeadNeighbors = visitedDeadNeighbors;
             this.spawned = new CellBag();
             this.died = new CellBag();
         }
 
-        public void willDie(int row, int col) {
+        void willDie(int row, int col) {
             died.add(row, col);
         }
 
-        public void willSpawn(int row, int col) {
+        void willSpawn(int row, int col) {
             spawned.add(row, col);
         }
 
-        public int countUpdates() {
+        int countUpdates() {
             return spawned.size + died.size;
+        }
+
+        void nextLiveCell(int row, int col) {
+            int neighbors = grid.neighbors(row, col);
+
+            if (neighbors < 2 || neighbors > 3) {
+                // overcrowding or underpopulation
+                willDie(row, col);
+                listener.onCellDied(row, col);
+            }
+
+            //@formatter:off
+            int up    = row - 1;
+            int down  = row + 1;
+            int left  = col - 1;
+            int right = col + 1;
+            eval(up,   left); eval(up,   col); eval(up,   right);
+            eval(row,  left); /*current cell*/ eval(row,  right);
+            eval(down, left); eval(down, col); eval(down, right);
+            //@formatter:on
+        }
+
+        private void eval(int row, int col) {
+            // only evaluate existing dead cells that were not yet visited
+            if (!grid.hasCell(row, col) || grid.get(row, col)) return;
+            if (!visitedDeadNeighbors.add(cell(row, col))) return;
+
+            int neighbors = grid.neighbors(row, col);
+
+            if (neighbors == 3) {
+                // reproduction
+                willSpawn(row, col);
+                listener.onCellSpawned(row, col);
+            }
+        }
+
+        static long cell(int row, int col) {
+            return (long) row << 32 | col & 0xffffffffL;
         }
 
         void updateGrid() {

@@ -394,7 +394,8 @@ class GameOfLifeTest {
                 {0, 0, 1, 1, 1, 0},
                 {0, 0, 0, 0, 0, 0}
         };
-        var game = game(initial);
+        int side = 10_000;
+        var game = game(initial, side, side);
         game.progress(lpl);
         assertGame(step1, game);
         game.progress(lpl);
@@ -418,9 +419,13 @@ class GameOfLifeTest {
     private static GameOfLife game(byte[][] grid) {
         int rows = grid.length;
         int columns = grid[0].length;
+        return game(grid, rows, columns);
+    }
+
+    private static GameOfLife game(byte[][] grid, int rows, int columns) {
         boolean[][] b = new boolean[rows][columns];
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < columns; j++) {
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[i].length; j++) {
                 b[i][j] = grid[i][j] != 0;
             }
         }
@@ -431,5 +436,4 @@ class GameOfLifeTest {
         assertGame(grid, game);
         return game;
     }
-
 }
