@@ -1,6 +1,7 @@
 package com.voidaspect.jgol.game;
 
 import com.voidaspect.jgol.grid.AbstractFiniteGrid;
+import com.voidaspect.jgol.grid.CellOperation;
 import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
@@ -41,7 +42,7 @@ final class Life extends AbstractLife {
 
     @Override
     protected void nextGen(CellListener listener) {
-        ps.progress(grid, listener);
+        ps.progress(inner, listener);
     }
 
     @Override
@@ -96,6 +97,17 @@ final class Life extends AbstractLife {
             freeze();
         }
 
+        @Override
+        public void forEachAlive(CellOperation operation) {
+            inner.forEachAlive(operation);
+            unfreeze();
+        }
+
+        @Override
+        public void forEachAlive(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
+            inner.forEachAlive(fromRow, fromColumn, toRow, toCol, operation);
+            unfreeze();
+        }
     }
 
 }
