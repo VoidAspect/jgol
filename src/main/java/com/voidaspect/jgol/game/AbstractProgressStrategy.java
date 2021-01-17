@@ -55,7 +55,7 @@ abstract class AbstractProgressStrategy implements ProgressStrategy {
 
         final CellListener listener;
 
-        final Set<Long> visitedDeadNeighbors;
+        final Set<Long> visited;
 
         final CellBag spawned;
 
@@ -65,10 +65,10 @@ abstract class AbstractProgressStrategy implements ProgressStrategy {
             this(grid, listener, new HashSet<>());
         }
 
-        NextGen(Grid grid, CellListener listener, Set<Long> visitedDeadNeighbors) {
+        NextGen(Grid grid, CellListener listener, Set<Long> visited) {
             this.grid = grid;
             this.listener = listener;
-            this.visitedDeadNeighbors = visitedDeadNeighbors;
+            this.visited = visited;
             this.spawned = new CellBag();
             this.died = new CellBag();
         }
@@ -85,7 +85,7 @@ abstract class AbstractProgressStrategy implements ProgressStrategy {
             return spawned.size + died.size;
         }
 
-        void nextLiveCell(int row, int col) {
+        void evaluate(int row, int col) {
             int neighbors = grid.neighbors(row, col);
 
             if (neighbors < 2 || neighbors > 3) {
@@ -99,16 +99,16 @@ abstract class AbstractProgressStrategy implements ProgressStrategy {
             int down  = row + 1;
             int left  = col - 1;
             int right = col + 1;
-            eval(up,   left); eval(up,   col); eval(up,   right);
-            eval(row,  left); /*current cell*/ eval(row,  right);
-            eval(down, left); eval(down, col); eval(down, right);
+            visit(up,   left); visit(up,   col); visit(up,   right);
+            visit(row,  left); /*current cell*/  visit(row,  right);
+            visit(down, left); visit(down, col); visit(down, right);
             //@formatter:on
         }
 
-        private void eval(int row, int col) {
+        private void visit(int row, int col) {
             // only evaluate existing dead cells that were not yet visited
             if (!grid.hasCell(row, col) || grid.get(row, col)) return;
-            if (!visitedDeadNeighbors.add(cell(row, col))) return;
+            if (!visited.add(cell(row, col))) return;
 
             int neighbors = grid.neighbors(row, col);
 

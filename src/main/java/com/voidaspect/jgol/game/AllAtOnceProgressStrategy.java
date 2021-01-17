@@ -8,7 +8,7 @@ final class AllAtOnceProgressStrategy extends AbstractProgressStrategy {
     @Override
     int progressAndCountUpdates(Grid grid, CellListener listener) {
         var ng = new NextGen(grid, listener);
-        grid.forEachAlive(ng::nextLiveCell);
+        grid.forEachAlive(ng::evaluate);
         ng.updateGrid();
         return ng.countUpdates();
     }
