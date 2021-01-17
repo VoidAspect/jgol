@@ -4,8 +4,6 @@ import java.util.Arrays;
 
 /**
  * An auxiliary data structure designed to hold a collection of cell indices of a 2-dimensional matrix.
- * <br>Implemented as a Structure of Arrays with on-demand resizing.</br>
- * <br>Arrays <b>r</b> and <b>c</b> hold row and column indices of cells respectively.</br>
  * <p> API of {@code CellBag} allows:</p>
  * <ol>
  *     <li>to add cell indices one by one</li>
