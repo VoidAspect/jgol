@@ -1,21 +1,21 @@
 package com.voidaspect.jgol.grid.cell;
 
-import java.util.HashSet;
-import java.util.Set;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 
 public class CellSet {
 
-    private final Set<Long> cells;
+    private final LongSet cells;
 
     public CellSet() {
-        cells = new HashSet<>();
+        cells = new LongOpenHashSet();
     }
 
     public CellSet(int size) {
-        cells = new HashSet<>(size);
+        cells = new LongOpenHashSet(size);
     }
 
-    protected CellSet(Set<Long> cells) {
+    public CellSet(LongSet cells) {
         this.cells = cells;
     }
 
@@ -36,9 +36,7 @@ public class CellSet {
     }
 
     public void forEach(CellOperation operation) {
-        for (long cell : cells) {
-            operation.apply(Cells.unpackRow(cell), Cells.unpackCol(cell));
-        }
+        cells.forEach((long cell) -> operation.apply(Cells.unpackRow(cell), Cells.unpackCol(cell)));
     }
 
     public void clear() {

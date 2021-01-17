@@ -1,11 +1,15 @@
 package com.voidaspect.jgol.grid.cell;
 
-import java.util.LinkedHashSet;
+import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 
 public class LinkedCellSet extends CellSet {
 
     public LinkedCellSet() {
-        super(new LinkedHashSet<>());
+        super(new LongLinkedOpenHashSet());
+    }
+
+    public LinkedCellSet(int size) {
+        super(new LongLinkedOpenHashSet(size));
     }
 
 }

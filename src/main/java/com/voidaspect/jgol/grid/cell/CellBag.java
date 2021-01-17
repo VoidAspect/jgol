@@ -18,9 +18,7 @@ public final class CellBag {
 
     private static final int INITIAL_CAPACITY = 64;
 
-    private int[] r;
-
-    private int[] c;
+    private long[] cells;
 
     private int size;
 
@@ -28,7 +26,8 @@ public final class CellBag {
 
     public void forEach(CellOperation action) {
         for (int i = 0; i < size; i++) {
-            action.apply(r[i], c[i]);
+            long cell = cells[i];
+            action.apply(Cells.unpackRow(cell), Cells.unpackCol(cell));
         }
     }
 
@@ -36,8 +35,7 @@ public final class CellBag {
         //region ensure capacity
         if (size == 0) { // initial allocation
             capacity = INITIAL_CAPACITY;
-            r = new int[INITIAL_CAPACITY];
-            c = new int[INITIAL_CAPACITY];
+            cells = new long[INITIAL_CAPACITY];
         } else if (size == capacity) { // resize on-demand
             if (size == MAX_ARRAY_LENGTH) {
                 throw new IllegalStateException("cell bag too big");
@@ -48,13 +46,11 @@ public final class CellBag {
                 needed = MAX_ARRAY_LENGTH;
             }
             capacity = needed;
-            r = Arrays.copyOf(r, capacity);
-            c = Arrays.copyOf(c, capacity);
+            cells = Arrays.copyOf(cells, capacity);
         }
         //endregion
         int index = size++;
-        r[index] = row;
-        c[index] = col;
+        cells[index] = Cells.pack(row, col);
     }
 
     public int size() {
