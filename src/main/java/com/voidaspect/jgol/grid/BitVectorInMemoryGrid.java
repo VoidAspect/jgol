@@ -52,35 +52,44 @@ public class BitVectorInMemoryGrid extends AbstractFiniteGrid {
     }
 
     private int value(int row, int col) {
-        return grid[row] != null && grid[row].get(col) ? 1 : 0;
+        BitSet cells;
+        return (cells = grid[row]) != null && cells.get(col) ? 1 : 0;
     }
 
     @Override
-    public void forEachAlive(CellOperation operation) {
-        for (int row = 1; row <= cols; row++) {
-            BitSet cells;
-            if ((cells = grid[row]) == null) continue;
-            for (int col = cells.nextSetBit(1); col > 0; col = cells.nextSetBit(col + 1)) {
-                operation.apply(row - 1, col - 1);
-            }
-        }
-    }
-
-    @Override
-    public void forEachAlive(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
-        Objects.checkFromToIndex(fromRow, toRow, rows);
-        Objects.checkFromToIndex(fromColumn, toCol, cols);
+    protected void forEachAliveWithoutBoundsChecking(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
         fromRow++;
         fromColumn++;
         toRow++;
         toCol++;
         for (int row = fromRow; row < toRow; row++) {
             BitSet cells;
-            if ((cells = grid[row]) == null) continue;
+            if ((cells = grid[row]) == null || cells.isEmpty()) continue;
             for (int col = cells.nextSetBit(fromColumn); col < toCol && col > 0; col = cells.nextSetBit(col + 1)) {
                 operation.apply(row - 1, col - 1);
             }
         }
+    }
+
+    @Override
+    protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
+        fromRow++;
+        fromColumn++;
+        int toRow = fromRow + rows;
+        int toCol = fromColumn + columns;
+
+        boolean[][] snapshot = new boolean[rows][];
+
+        for (int ri = fromRow; ri < toRow; ri++) {
+            boolean[] row = snapshot[ri - fromRow] = new boolean[columns];
+            BitSet cells;
+            if ((cells = grid[ri]) == null || cells.isEmpty()) continue;
+            for (int ci = cells.nextSetBit(fromColumn); ci < toCol && ci > 0; ci = cells.nextSetBit(ci + 1)) {
+                row[ci - fromColumn] = true;
+            }
+        }
+
+        return snapshot;
     }
 
     @Override

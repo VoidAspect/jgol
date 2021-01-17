@@ -78,19 +78,17 @@ public abstract class AbstractFiniteGrid implements Grid {
 
     @Override
     public void forEachAlive(CellOperation operation) {
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                if (get(row, col)) {
-                    operation.apply(row, col);
-                }
-            }
-        }
+        forEachAliveWithoutBoundsChecking(0, 0, rows, cols, operation);
     }
 
     @Override
-    public void forEachAlive(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
+    public final void forEachAlive(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
         Objects.checkFromToIndex(fromRow, toRow, rows);
         Objects.checkFromToIndex(fromColumn, toCol, cols);
+        forEachAliveWithoutBoundsChecking(fromRow, fromColumn, toRow, toCol, operation);
+    }
+
+    protected void forEachAliveWithoutBoundsChecking(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
         for (int row = fromRow; row < toRow; row++) {
             for (int col = fromColumn; col < toCol; col++) {
                 if (get(row, col)) {
@@ -108,7 +106,9 @@ public abstract class AbstractFiniteGrid implements Grid {
             if (row == null) continue;
             int columnLength = Math.min(cols, row.length);
             for (int c = 0; c < columnLength; c++) {
-                set(r, c, initial[r][c]);
+                if (row[c]) {
+                    set(r, c, true);
+                }
             }
         }
     }

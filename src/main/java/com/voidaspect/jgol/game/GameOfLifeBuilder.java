@@ -10,7 +10,7 @@ import java.util.concurrent.Executors;
 
 public class GameOfLifeBuilder {
 
-    public static final int DEFAULT_PARALLEL_PROGRESSION_THRESHOLD = 1_000_000;
+    public static final long DEFAULT_PARALLEL_PROGRESSION_THRESHOLD = 1_000_000L;
 
     public static final int DEFAULT_CHUNK_SIDE = 1_000;
 
@@ -24,7 +24,7 @@ public class GameOfLifeBuilder {
 
     private ExecutorService progressExecutor;
 
-    private int parallelizationThreshold = DEFAULT_PARALLEL_PROGRESSION_THRESHOLD;
+    private long parallelizationThreshold = DEFAULT_PARALLEL_PROGRESSION_THRESHOLD;
 
     private int chunkWidth = DEFAULT_CHUNK_SIDE;
 
@@ -89,7 +89,7 @@ public class GameOfLifeBuilder {
         return this;
     }
 
-    public int getParallelizationThreshold() {
+    public long getParallelizationThreshold() {
         return parallelizationThreshold;
     }
 

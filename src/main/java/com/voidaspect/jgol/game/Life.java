@@ -98,13 +98,7 @@ final class Life extends AbstractLife {
         }
 
         @Override
-        public void forEachAlive(CellOperation operation) {
-            inner.forEachAlive(operation);
-            unfreeze();
-        }
-
-        @Override
-        public void forEachAlive(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
+        protected void forEachAliveWithoutBoundsChecking(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
             inner.forEachAlive(fromRow, fromColumn, toRow, toCol, operation);
             unfreeze();
         }

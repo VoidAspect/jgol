@@ -288,17 +288,7 @@ final class ThreadSafeLife extends AbstractLife {
         }
 
         @Override
-        public void forEachAlive(CellOperation operation) {
-            long stamp = gridLock.writeLock();
-            try {
-                inner.forEachAlive(operation);
-            } finally {
-                gridLock.unlockWrite(stamp);
-            }
-        }
-
-        @Override
-        public void forEachAlive(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
+        protected void forEachAliveWithoutBoundsChecking(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
             long stamp = gridLock.writeLock();
             try {
                 inner.forEachAlive(fromRow, fromColumn, toRow, toCol, operation);

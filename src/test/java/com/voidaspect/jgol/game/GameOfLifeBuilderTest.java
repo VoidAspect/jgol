@@ -13,9 +13,9 @@ import static org.mockito.Mockito.*;
 
 class GameOfLifeBuilderTest {
 
-    private static final int LARGE_GRID_ROWS = 10000;
+    private static final int LARGE_GRID_ROWS = 100_000;
 
-    private static final int LARGE_GRID_COLUMNS = 20000;
+    private static final int LARGE_GRID_COLUMNS = 200_000;
 
     private Grid grid;
 
