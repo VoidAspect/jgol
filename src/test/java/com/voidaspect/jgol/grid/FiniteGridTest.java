@@ -55,6 +55,21 @@ public abstract class FiniteGridTest {
         assertFalse(grid.get(2, 1));
         assertFalse(grid.get(2, 2));
 
+        assertTrue(grid.hasCell(0, 0));
+        assertTrue(grid.hasCell(0, 1));
+        assertTrue(grid.hasCell(0, 2));
+        assertTrue(grid.hasCell(1, 0));
+        assertTrue(grid.hasCell(1, 1));
+        assertTrue(grid.hasCell(1, 2));
+        assertTrue(grid.hasCell(2, 0));
+        assertTrue(grid.hasCell(2, 1));
+        assertTrue(grid.hasCell(2, 2));
+
+        assertFalse(grid.hasCell(-1, 0));
+        assertFalse(grid.hasCell(0, -1));
+        assertFalse(grid.hasCell(3, 1));
+        assertFalse(grid.hasCell(1, 3));
+
         assertThrows(IndexOutOfBoundsException.class, () -> grid.set(-1, 0, true));
         assertThrows(IndexOutOfBoundsException.class, () -> grid.set(0, -1, true));
         assertThrows(IndexOutOfBoundsException.class, () -> grid.set(3, 1, true));
@@ -159,6 +174,32 @@ public abstract class FiniteGridTest {
                 0, Set.of(0, 2),
                 2, Set.of(0, 1, 2)
         ), alive);
+    }
+
+    @Test
+    void shouldReturnLiveCellAmount() {
+        var grid = grid(new boolean[][] {
+                {true, false, true},
+                {false, false, false},
+                {true, true, true}
+        }, 3, 3);
+
+        assertEquals(5, grid.liveCells());
+
+        grid.set(0, 0, false);
+        assertEquals(4, grid.liveCells());
+
+        grid.set(0, 0, false);
+        assertEquals(4, grid.liveCells());
+
+        grid.set(0, 1, true);
+        assertEquals(5, grid.liveCells());
+
+        grid.set(0, 1, true);
+        assertEquals(5, grid.liveCells());
+
+        grid.clear();
+        assertEquals(0, grid.liveCells());
     }
 
     protected abstract Grid grid(int rows, int cols);

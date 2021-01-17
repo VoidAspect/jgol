@@ -1,17 +1,15 @@
 package com.voidaspect.jgol.grid;
 
-import java.util.LinkedHashSet;
-import java.util.Objects;
-
-import static com.voidaspect.jgol.grid.Cells.*;
+import com.voidaspect.jgol.grid.cell.CellOperation;
+import com.voidaspect.jgol.grid.cell.LinkedCellSet;
 
 public final class HashGrid extends AbstractFiniteGrid {
 
-    private final LinkedHashSet<Long> cells;
+    private final LinkedCellSet cells;
 
     public HashGrid(int rows, int cols) {
         super(rows, cols);
-        this.cells = new LinkedHashSet<>();
+        this.cells = new LinkedCellSet();
     }
 
     public HashGrid(boolean[][] grid, int rows, int columns) {
@@ -21,29 +19,23 @@ public final class HashGrid extends AbstractFiniteGrid {
 
     @Override
     public boolean get(int row, int col) {
-        Objects.checkIndex(row, rows);
-        Objects.checkIndex(col, cols);
-        return cells.contains(pack(row, col));
+        checkIndex(row, col);
+        return cells.contains(row, col);
     }
 
     @Override
     public void set(int row, int col, boolean state) {
-        Objects.checkIndex(row, rows);
-        Objects.checkIndex(col, cols);
-
-        long cell = pack(row, col);
-
+        checkIndex(row, col);
         if (state) {
-            cells.add(cell);
+            cells.add(row, col);
         } else {
-            cells.remove(cell);
+            cells.remove(row, col);
         }
     }
 
     @Override
     public int neighbors(int row, int col) {
-        Objects.checkIndex(row, rows);
-        Objects.checkIndex(col, cols);
+        checkIndex(row, col);
         //@formatter:off
         int up    = row - 1;
         int down  = row + 1;
@@ -56,7 +48,7 @@ public final class HashGrid extends AbstractFiniteGrid {
     }
 
     private int value(int row, int col) {
-        return hasCell(row, col) && cells.contains(pack(row, col)) ? 1 : 0;
+        return hasCell(row, col) && cells.contains(row, col) ? 1 : 0;
     }
 
     @Override
@@ -65,8 +57,13 @@ public final class HashGrid extends AbstractFiniteGrid {
     }
 
     @Override
+    public long liveCells() {
+        return cells.size();
+    }
+
+    @Override
     public void forEachAlive(CellOperation operation) {
-        cells.forEach(cell -> operation.apply(unpackRow(cell), unpackCol(cell)));
+        cells.forEach(operation);
     }
 
 }

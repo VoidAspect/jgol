@@ -1,5 +1,7 @@
 package com.voidaspect.jgol.grid;
 
+import com.voidaspect.jgol.grid.cell.CellOperation;
+
 public interface Grid {
 
     boolean get(int row, int col);
@@ -19,6 +21,8 @@ public interface Grid {
     int getColumns();
 
     long getSize();
+
+    long liveCells();
 
     boolean hasCell(int row, int col);
 

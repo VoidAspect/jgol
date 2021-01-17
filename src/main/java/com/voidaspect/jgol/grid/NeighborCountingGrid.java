@@ -10,6 +10,8 @@ public final class NeighborCountingGrid extends AbstractFiniteGrid {
 
     private final byte[][] grid;
 
+    private long liveCells;
+
     public NeighborCountingGrid(int rows, int cols) {
         super(rows, cols);
         grid = new byte[rows][cols];
@@ -47,7 +49,14 @@ public final class NeighborCountingGrid extends AbstractFiniteGrid {
         boolean notDownEdge  = down < rows;
         //@formatter:on
 
-        int update = state ? ALIVE_NEIGHBOR : -ALIVE_NEIGHBOR;
+        int update;
+        if (state) {
+            liveCells++;
+            update = ALIVE_NEIGHBOR;
+        } else {
+            liveCells--;
+            update = -ALIVE_NEIGHBOR;
+        }
 
         // up row
         if (notTopEdge) {
@@ -82,6 +91,12 @@ public final class NeighborCountingGrid extends AbstractFiniteGrid {
         for (int row = 1; row < rows; row++) {
             System.arraycopy(first, 0, grid[row], 0, cols);
         }
+        liveCells = 0;
+    }
+
+    @Override
+    public long liveCells() {
+        return liveCells;
     }
 
 }

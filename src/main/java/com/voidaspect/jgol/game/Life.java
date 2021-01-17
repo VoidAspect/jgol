@@ -1,7 +1,7 @@
 package com.voidaspect.jgol.game;
 
 import com.voidaspect.jgol.grid.AbstractFiniteGrid;
-import com.voidaspect.jgol.grid.CellOperation;
+import com.voidaspect.jgol.grid.cell.CellOperation;
 import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
@@ -95,6 +95,11 @@ final class Life extends AbstractLife {
         public void clear() {
             inner.clear();
             freeze();
+        }
+
+        @Override
+        public long liveCells() {
+            return inner.liveCells();
         }
 
         @Override

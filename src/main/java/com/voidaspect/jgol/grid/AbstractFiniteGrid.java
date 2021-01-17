@@ -1,5 +1,7 @@
 package com.voidaspect.jgol.grid;
 
+import com.voidaspect.jgol.grid.cell.CellOperation;
+
 import java.util.Objects;
 
 public abstract class AbstractFiniteGrid implements Grid {
@@ -22,6 +24,11 @@ public abstract class AbstractFiniteGrid implements Grid {
         this.rows = rows;
         this.cols = cols;
         this.size = (long) rows * cols;
+    }
+
+    protected final void checkIndex(int row, int col) {
+        Objects.checkIndex(row, rows);
+        Objects.checkIndex(col, cols);
     }
 
     protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {

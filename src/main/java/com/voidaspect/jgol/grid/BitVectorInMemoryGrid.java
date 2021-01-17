@@ -1,13 +1,16 @@
 package com.voidaspect.jgol.grid;
 
+import com.voidaspect.jgol.grid.cell.CellOperation;
+
 import java.util.BitSet;
-import java.util.Objects;
 
 public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
 
     private final BitSet[] grid;
 
     private final int bits;
+
+    private long liveCells;
 
     public BitVectorInMemoryGrid(int rows, int cols) {
         super(rows, cols);
@@ -27,13 +30,15 @@ public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
 
     @Override
     public void set(int row, int col, boolean state) {
-        Objects.checkIndex(row, rows);
-        Objects.checkIndex(col, cols);
+        checkIndex(row, col);
         BitSet cells;
         if ((cells = grid[++row]) == null) {
             cells = grid[row] = new BitSet(bits);
         }
-        cells.set(++col, state);
+        if (cells.get(++col) != state) {
+            cells.set(col, state);
+            liveCells += state ? 1 : -1;
+        }
     }
 
     @Override
@@ -98,5 +103,11 @@ public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
                 cells.clear();
             }
         }
+        liveCells = 0;
+    }
+
+    @Override
+    public long liveCells() {
+        return liveCells;
     }
 }

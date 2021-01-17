@@ -13,6 +13,8 @@ public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
 
     private final int upperColBound;
 
+    private long liveCells;
+
     public PaddedInMemoryGrid(int rows, int columns) {
         super(rows, columns);
         // pad matrix from all sides to avoid range checks on neighbor calculation
@@ -34,7 +36,12 @@ public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
             boolean[] row = initial[i];
             if (row == null) continue;
             int columnLength = Math.min(cols, row.length);
-            System.arraycopy(row, 0, grid[PADDING + i], PADDING, columnLength);
+            for (int j = 0; j < columnLength; j++) {
+                if (row[j]) {
+                    liveCells++;
+                    grid[i + PADDING][j + PADDING] = true;
+                }
+            }
         }
     }
 
@@ -61,7 +68,12 @@ public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
     public void set(int row, int col, boolean state) {
         Objects.checkIndex(row, rows);
         Objects.checkIndex(col, cols);
-        grid[PADDING + row][PADDING + col] = state;
+        row += PADDING;
+        col += PADDING;
+        if (grid[row][col] != state) {
+            grid[row][col] = state;
+            liveCells += state ? 1 : -1;
+        }
     }
 
     @Override
@@ -85,6 +97,12 @@ public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
         for (int i = PADDING; i < upperRowBound; i++) {
             System.arraycopy(empty, PADDING, grid[i], PADDING, upperColBound);
         }
+        liveCells = 0;
+    }
+
+    @Override
+    public long liveCells() {
+        return liveCells;
     }
 
     private static final byte ALIVE = 1;

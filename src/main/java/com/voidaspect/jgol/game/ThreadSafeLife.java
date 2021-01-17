@@ -1,7 +1,7 @@
 package com.voidaspect.jgol.game;
 
 import com.voidaspect.jgol.grid.AbstractFiniteGrid;
-import com.voidaspect.jgol.grid.CellOperation;
+import com.voidaspect.jgol.grid.cell.CellOperation;
 import com.voidaspect.jgol.grid.Grid;
 import com.voidaspect.jgol.listener.CellListener;
 
@@ -288,12 +288,30 @@ final class ThreadSafeLife extends AbstractLife {
         }
 
         @Override
+        public long liveCells() {
+            long stamp = gridLock.tryOptimisticRead();
+
+            if (stamp != 0) {
+                long alive = inner.liveCells();
+                if (gridLock.validate(stamp)) return alive;
+            }
+
+            stamp = gridLock.readLock();
+
+            try {
+                return inner.liveCells();
+            } finally {
+                gridLock.unlockRead(stamp);
+            }
+        }
+
+        @Override
         public void forEachAlive(CellOperation operation) {
-            long stamp = gridLock.writeLock();
+            long stamp = gridLock.readLock();
             try {
                 inner.forEachAlive(operation);
             } finally {
-                gridLock.unlockWrite(stamp);
+                gridLock.unlockRead(stamp);
             }
         }
     }

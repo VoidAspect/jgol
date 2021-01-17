@@ -1,4 +1,4 @@
-package com.voidaspect.jgol.grid;
+package com.voidaspect.jgol.grid.cell;
 
 public final class Cells {
 
