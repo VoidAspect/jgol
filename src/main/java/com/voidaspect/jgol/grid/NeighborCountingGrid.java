@@ -2,7 +2,7 @@ package com.voidaspect.jgol.grid;
 
 import java.util.Arrays;
 
-public class NeighborCountingGrid extends AbstractFiniteGrid {
+public final class NeighborCountingGrid extends AbstractFiniteGrid {
 
     private static final byte ALIVE_MASK = 1;
 

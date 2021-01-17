@@ -10,11 +10,7 @@ It provides access to the game's grid and methods for game's progression.
 
 ### Progression Configuration
 Actual implementation is flexibly configured via `com.voidaspect.jgol.game.GameOfLifeBuilder`.
-It supports optional thread safety as well as parallel calculation of next generation.
-
-Parallel progression is implemented by splitting the grid into chunks and dividing those between threads.
-It is used when the number of cells reaches the `parallelizationThreshold`, which is, by default, equal to
-**1 000 000 (1 million)**.
+It supports optional thread safety
 
 Each chunk, by default, is a **square 1000x1000** region of the grid.
 
@@ -30,8 +26,9 @@ Cell on a grid is defined by two indices: `row` and `col`.
 
 For example, `com.voidaspect.jgol.grid.PaddedInMemoryGrid` uses a two-dimensional array of type
 `boolean[][]` to store cell values. 
-This implementation is optimized for speedy neighbor-count calculation and is suitable for most cases,
-although for a particularly large grid it will require a lot of heap memory.
+This implementation is optimized for large dense grids.
+
+For sparse grids, `com.voidaspect.jgol.grid.HashGrid` is preferable.
 
 ### Progress Listener
 `com.voidaspect.jgol.listener.ProgressListener` interface allows client to process events when game progresses.

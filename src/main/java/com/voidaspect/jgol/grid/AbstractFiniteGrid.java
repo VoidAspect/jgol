@@ -63,7 +63,7 @@ public abstract class AbstractFiniteGrid implements Grid {
     }
 
     @Override
-    public boolean hasCell(int row, int col) {
+    public final boolean hasCell(int row, int col) {
         return row >= 0 && row < rows && col >= 0 && col < cols;
     }
 
@@ -78,19 +78,8 @@ public abstract class AbstractFiniteGrid implements Grid {
 
     @Override
     public void forEachAlive(CellOperation operation) {
-        forEachAliveWithoutBoundsChecking(0, 0, rows, cols, operation);
-    }
-
-    @Override
-    public final void forEachAlive(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
-        Objects.checkFromToIndex(fromRow, toRow, rows);
-        Objects.checkFromToIndex(fromColumn, toCol, cols);
-        forEachAliveWithoutBoundsChecking(fromRow, fromColumn, toRow, toCol, operation);
-    }
-
-    protected void forEachAliveWithoutBoundsChecking(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
-        for (int row = fromRow; row < toRow; row++) {
-            for (int col = fromColumn; col < toCol; col++) {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
                 if (get(row, col)) {
                     operation.apply(row, col);
                 }

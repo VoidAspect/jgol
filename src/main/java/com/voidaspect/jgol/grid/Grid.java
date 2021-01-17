@@ -24,6 +24,4 @@ public interface Grid {
 
     void forEachAlive(CellOperation operation);
 
-    void forEachAlive(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation);
-
 }

@@ -161,28 +161,6 @@ public abstract class FiniteGridTest {
         ), alive);
     }
 
-    @Test
-    void shouldIterateOverLiveCellsInRange() {
-        var grid = grid(new boolean[][] {
-                {true, false, true},
-                {false, true, false},
-                {true, true, true}
-        }, 3, 3);
-
-        Map<Integer, Set<Integer>> alive = new HashMap<>();
-
-        grid.forEachAlive(1, 1, 3, 3, ((row, col) -> alive.compute(row, (key, value) -> {
-            if (value == null) value = new HashSet<>();
-            value.add(col);
-            return value;
-        })));
-
-        assertEquals(Map.of(
-                1, Set.of(1),
-                2, Set.of(1, 2)
-        ), alive);
-    }
-
     protected abstract Grid grid(int rows, int cols);
 
     protected abstract Grid grid(boolean[][] initial, int rows, int cols);

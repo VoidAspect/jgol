@@ -3,7 +3,7 @@ package com.voidaspect.jgol.grid;
 import java.util.BitSet;
 import java.util.Objects;
 
-public class BitVectorInMemoryGrid extends AbstractFiniteGrid {
+public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
 
     private final BitSet[] grid;
 
@@ -57,15 +57,13 @@ public class BitVectorInMemoryGrid extends AbstractFiniteGrid {
     }
 
     @Override
-    protected void forEachAliveWithoutBoundsChecking(int fromRow, int fromColumn, int toRow, int toCol, CellOperation operation) {
-        fromRow++;
-        fromColumn++;
-        toRow++;
-        toCol++;
-        for (int row = fromRow; row < toRow; row++) {
+    public void forEachAlive(CellOperation operation) {
+        int fromRow = 1;
+        int fromColumn = 1;
+        for (int row = fromRow; row <= rows; row++) {
             BitSet cells;
             if ((cells = grid[row]) == null || cells.isEmpty()) continue;
-            for (int col = cells.nextSetBit(fromColumn); col < toCol && col > 0; col = cells.nextSetBit(col + 1)) {
+            for (int col = cells.nextSetBit(fromColumn); col <= cols && col > 0; col = cells.nextSetBit(col + 1)) {
                 operation.apply(row - 1, col - 1);
             }
         }

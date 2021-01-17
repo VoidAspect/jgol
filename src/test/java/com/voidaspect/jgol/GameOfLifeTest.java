@@ -1,8 +1,7 @@
 package com.voidaspect.jgol;
 
 import com.voidaspect.jgol.grid.BitVectorInMemoryGrid;
-import com.voidaspect.jgol.grid.NeighborCountingGrid;
-import com.voidaspect.jgol.grid.PaddedInMemoryGrid;
+import com.voidaspect.jgol.grid.HashGrid;
 import com.voidaspect.jgol.listener.LoggingProgressListener;
 import com.voidaspect.jgol.listener.ProgressListener;
 import org.junit.jupiter.api.Test;
@@ -54,7 +53,7 @@ class GameOfLifeTest {
                 {true, true}
         };
         int generations = Integer.MAX_VALUE;
-        var game = GameOfLife.builder(new NeighborCountingGrid(initial, 20000, 20000)).build();
+        var game = GameOfLife.builder(new HashGrid(initial, 20000, 20000)).build();
         assertFalse(game.isFrozen());
         while (generations-- > 0) {
             game.progress();
@@ -81,7 +80,7 @@ class GameOfLifeTest {
     @Test
     void shouldProgressOnLargeEmptyGrid() {
         int side = 20_000;
-        var grid = new BitVectorInMemoryGrid(side, side);
+        var grid = new HashGrid(side, side);
         var game = GameOfLife.builder(grid).build();
         game.progress();
     }
@@ -90,7 +89,7 @@ class GameOfLifeTest {
     void shouldHandleLargeGrid() {
         int side = 10000;
         int edge = side - 1;
-        var grid = new PaddedInMemoryGrid(side, side);
+        var grid = new BitVectorInMemoryGrid(side, side);
         var game = GameOfLife.builder(grid).build();
         boolean[][] expected = new boolean[side][side];
         assertArrayEquals(expected, grid.snapshot());
@@ -394,7 +393,7 @@ class GameOfLifeTest {
                 {0, 0, 1, 1, 1, 0},
                 {0, 0, 0, 0, 0, 0}
         };
-        int side = 10_000;
+        int side = 100_000;
         var game = game(initial, side, side);
         game.progress(lpl);
         assertGame(step1, game);
@@ -423,13 +422,14 @@ class GameOfLifeTest {
     }
 
     private static GameOfLife game(byte[][] grid, int rows, int columns) {
-        boolean[][] b = new boolean[rows][columns];
+        boolean[][] b = new boolean[grid.length][];
         for (int i = 0; i < grid.length; i++) {
+            boolean[] r = b[i] = new boolean[grid[i].length];
             for (int j = 0; j < grid[i].length; j++) {
-                b[i][j] = grid[i][j] != 0;
+                r[j] = grid[i][j] != 0;
             }
         }
-        var inMemoryGrid = new BitVectorInMemoryGrid(b, rows, columns);
+        var inMemoryGrid = new HashGrid(b, rows, columns);
         assertEquals(rows, inMemoryGrid.getRows());
         assertEquals(columns, inMemoryGrid.getColumns());
         var game = GameOfLife.builder(inMemoryGrid).build();
