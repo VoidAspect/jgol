@@ -26,16 +26,6 @@ final class Life extends AbstractLife {
     }
 
     @Override
-    public void finish() {
-        ps.finish();
-    }
-
-    @Override
-    public boolean isFinished() {
-        return ps.isFinished();
-    }
-
-    @Override
     public Grid grid() {
         return grid;
     }

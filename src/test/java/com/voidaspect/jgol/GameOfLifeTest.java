@@ -38,15 +38,6 @@ class GameOfLifeTest {
     }
 
     @Test
-    void shouldNotChangeAfterFinish() {
-        byte[][] expected = {{1}};
-        var game = game(expected);
-        game.finish();
-        game.progress();
-        assertGame(expected, game);
-    }
-
-    @Test
     void shouldProgressOverManyGenerations() {
         boolean[][] initial = {
                 {true, true},
@@ -112,7 +103,6 @@ class GameOfLifeTest {
         expected[edge][edge] = false;
         game.progress();
         assertArrayEquals(expected, grid.snapshot());
-        game.finish();
         assertTimeout(Duration.ofMillis(5), (Executable) game::progress);
         assertArrayEquals(expected, grid.snapshot());
     }

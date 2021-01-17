@@ -41,56 +41,6 @@ final class ThreadSafeLife extends AbstractLife {
     }
 
     @Override
-    public void finish() {
-        long stamp = gridLock.tryOptimisticRead();
-
-        if (stamp != 0) {
-            boolean finished = life.isFinished();
-            if (gridLock.validate(stamp)) {
-                if (finished) return;
-
-                stamp = gridLock.writeLock();
-                try {
-                    life.finish();
-                    return;
-                } finally {
-                    gridLock.unlockWrite(stamp);
-                }
-            }
-        }
-
-        stamp = gridLock.readLock();
-
-        try {
-            if (life.isFinished()) return;
-
-            stamp = upgradeToWrite(stamp);
-
-            life.finish();
-        } finally {
-            gridLock.unlock(stamp);
-        }
-    }
-
-    @Override
-    public boolean isFinished() {
-        long stamp = gridLock.tryOptimisticRead();
-
-        if (stamp != 0) {
-            boolean finished = life.isFinished();
-            if (gridLock.validate(stamp)) return finished;
-        }
-
-        stamp = gridLock.readLock();
-
-        try {
-            return life.isFinished();
-        } finally {
-            gridLock.unlockRead(stamp);
-        }
-    }
-
-    @Override
     public Grid grid() {
         return grid;
     }

@@ -13,9 +13,8 @@ import com.voidaspect.jgol.listener.ProgressListener;
  *     <li>if cell is dead and it has exactly 3 alive neighbors - it becomes alive</li>
  * </ol>
  * State is updated via {@link #progress()} method.
- * When this game is finished, client is expected to call {@link #finish()} method to cleanup held resources
  */
-public interface GameOfLife extends Finishable, Freezable {
+public interface GameOfLife extends Freezable {
 
     void progress();
 

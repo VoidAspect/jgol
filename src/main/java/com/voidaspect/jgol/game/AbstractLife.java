@@ -17,7 +17,6 @@ public abstract class AbstractLife implements GameOfLife {
     }
 
     private void progressAndListen(ProgressListener listener) {
-        if (isFinished()) return;
         listener.onProgressStart();
         if (!isFrozen()) {
             nextGen(listener);

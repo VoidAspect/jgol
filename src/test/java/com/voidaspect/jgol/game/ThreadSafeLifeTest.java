@@ -43,25 +43,6 @@ class ThreadSafeLifeTest {
     }
 
     @Test
-    void shouldFinish() {
-        when(delegate.isFinished()).thenReturn(false);
-
-        assertFalse(subject.isFinished());
-        assertFalse(subject.isFinished());
-
-        subject.finish();
-
-        when(delegate.isFinished()).thenReturn(true);
-        assertTrue(subject.isFinished());
-        assertTrue(subject.isFinished());
-
-        subject.finish();
-        assertTrue(subject.isFinished());
-
-        verify(delegate, times(1)).finish();
-    }
-
-    @Test
     void shouldFreezeAndUnfreeze() {
         when(delegate.isFrozen()).thenReturn(false);
 
@@ -148,7 +129,6 @@ class ThreadSafeLifeTest {
 
     @Test
     void shouldWaitForProgressBeforeRead() {
-        when(delegate.isFinished()).thenReturn(false);
         when(delegate.isFrozen()).thenReturn(false);
         when(grid.get(0, 0)).thenReturn(true);
         doAnswer(invocation -> {

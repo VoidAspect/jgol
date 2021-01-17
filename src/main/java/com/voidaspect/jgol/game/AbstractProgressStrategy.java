@@ -9,11 +9,9 @@ abstract class AbstractProgressStrategy implements ProgressStrategy {
 
     private final AtomicBoolean frozen = new AtomicBoolean();
 
-    private final AtomicBoolean finished = new AtomicBoolean();
-
     @Override
     public void progress(Grid grid, CellListener listener) {
-        if (finished.get() || frozen.get()) return;
+        if (frozen.get()) return;
         int updates = progressAndCountUpdates(grid, listener);
         frozen.set(updates == 0);
     }
@@ -26,16 +24,6 @@ abstract class AbstractProgressStrategy implements ProgressStrategy {
     @Override
     public void unfreeze() {
         frozen.set(false);
-    }
-
-    @Override
-    public void finish() {
-        finished.set(true);
-    }
-
-    @Override
-    public boolean isFinished() {
-        return finished.get();
     }
 
     @Override
