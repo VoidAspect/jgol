@@ -25,6 +25,7 @@ public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
 
     @Override
     public boolean get(int row, int col) {
+        checkIndex(row, col);
         return grid[++row] != null && grid[row].get(++col);
     }
 
@@ -43,6 +44,7 @@ public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
 
     @Override
     public int neighbors(int row, int col) {
+        checkIndex(row, col);
         row++;
         col++;
         //@formatter:off
@@ -63,6 +65,8 @@ public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
 
     @Override
     public void forEachAlive(CellOperation operation) {
+        long remaining = liveCells;
+        if (remaining == 0) return;
         int fromRow = 1;
         int fromColumn = 1;
         for (int row = fromRow; row <= rows; row++) {
@@ -70,6 +74,7 @@ public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
             if ((cells = grid[row]) == null || cells.isEmpty()) continue;
             for (int col = cells.nextSetBit(fromColumn); col <= cols && col > 0; col = cells.nextSetBit(col + 1)) {
                 operation.apply(row - 1, col - 1);
+                if (--remaining == 0) return;
             }
         }
     }

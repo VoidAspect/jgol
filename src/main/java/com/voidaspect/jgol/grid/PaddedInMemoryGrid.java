@@ -1,7 +1,6 @@
 package com.voidaspect.jgol.grid;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
 
@@ -60,14 +59,13 @@ public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
 
     @Override
     public boolean get(int row, int col) {
-        // don't perform range checks, edges are always false
+        checkIndex(row, col);
         return grid[PADDING + row][PADDING + col];
     }
 
     @Override
     public void set(int row, int col, boolean state) {
-        Objects.checkIndex(row, rows);
-        Objects.checkIndex(col, cols);
+        checkIndex(row, col);
         row += PADDING;
         col += PADDING;
         if (grid[row][col] != state) {
@@ -78,6 +76,7 @@ public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
 
     @Override
     public int neighbors(int row, int col) {
+        checkIndex(row, col);
         row += PADDING;
         col += PADDING;
         //@formatter:off

@@ -85,10 +85,13 @@ public abstract class AbstractFiniteGrid implements Grid {
 
     @Override
     public void forEachAlive(CellOperation operation) {
+        long remaining = liveCells();
+        if (remaining == 0) return;
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 if (get(row, col)) {
                     operation.apply(row, col);
+                    if (--remaining == 0) return;
                 }
             }
         }

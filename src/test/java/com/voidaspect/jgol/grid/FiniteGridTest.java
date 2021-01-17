@@ -74,6 +74,16 @@ public abstract class FiniteGridTest {
         assertThrows(IndexOutOfBoundsException.class, () -> grid.set(0, -1, true));
         assertThrows(IndexOutOfBoundsException.class, () -> grid.set(3, 1, true));
         assertThrows(IndexOutOfBoundsException.class, () -> grid.set(1, 3, true));
+
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(-1, 0));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(0, -1));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(3, 1));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(1, 3));
+
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.neighbors(-1, 0));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.neighbors(0, -1));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.neighbors(3, 1));
+        assertThrows(IndexOutOfBoundsException.class, () -> grid.neighbors(1, 3));
     }
 
     @Test
