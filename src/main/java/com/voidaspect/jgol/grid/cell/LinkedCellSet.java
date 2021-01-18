@@ -2,7 +2,7 @@ package com.voidaspect.jgol.grid.cell;
 
 import it.unimi.dsi.fastutil.longs.LongLinkedOpenHashSet;
 
-public class LinkedCellSet extends CellSet {
+public final class LinkedCellSet extends AbstractCellSet<LongLinkedOpenHashSet> {
 
     public LinkedCellSet() {
         super(new LongLinkedOpenHashSet());

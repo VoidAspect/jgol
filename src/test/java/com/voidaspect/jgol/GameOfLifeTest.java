@@ -78,7 +78,7 @@ class GameOfLifeTest {
 
     @Test
     void shouldHandleLargeGrid() {
-        int side = 10000;
+        int side = 5000;
         int edge = side - 1;
         var grid = new BitVectorInMemoryGrid(side, side);
         var game = GameOfLife.builder(grid).build();
