@@ -18,7 +18,7 @@ Each chunk, by default, is a **square 1000x1000** region of the grid.
 Game's state is an object that implements `com.voidaspect.jgol.grid.Grid` interface.
 It represents the notion of a two-dimensional grid with two states for each cell.
 
-Implementation can be flexible: grid can be strictly finite or circular, in-memory or persistent etc.
+Implementation can be flexible: grid can be strictly finite or infinite/circular, in-memory or persistent etc.
 
 It supports read and write access and allows to count live neighbors of a cell.
 

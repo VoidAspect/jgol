@@ -24,7 +24,7 @@ public final class NeighborCountingGrid extends AbstractFiniteGrid {
 
     @Override
     public boolean get(int row, int col) {
-        return (grid[row][col] & ALIVE_MASK) != 0;
+        return exists(row, col) && (grid[row][col] & ALIVE_MASK) != 0;
     }
 
     @Override
@@ -81,6 +81,7 @@ public final class NeighborCountingGrid extends AbstractFiniteGrid {
 
     @Override
     public int neighbors(int row, int col) {
+        if (!exists(row, col)) return 0;
         return grid[row][col] >>> 1;
     }
 

@@ -2,9 +2,7 @@ package com.voidaspect.jgol.grid;
 
 import com.voidaspect.jgol.grid.cell.CellOperation;
 
-import java.util.Objects;
-
-public abstract class AbstractFiniteGrid implements Grid {
+public abstract class AbstractFiniteGrid extends AbstractGrid implements FiniteGrid {
 
     public static final int MIN_SIZE = 1;
 
@@ -26,32 +24,27 @@ public abstract class AbstractFiniteGrid implements Grid {
         this.size = (long) rows * cols;
     }
 
-    protected final void checkIndex(int row, int col) {
-        Objects.checkIndex(row, rows);
-        Objects.checkIndex(col, cols);
+    @Override
+    public final boolean[][] snapshot() {
+        return snapshot(0, 0, rows, cols);
     }
 
-    protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
-        var snapshot = new boolean[rows][columns];
-        for (int row = fromRow; row < rows; row++) {
-            boolean[] snapshotRow = snapshot[row - fromRow];
-            for (int col = fromColumn; col < columns; col++) {
-                snapshotRow[col - fromColumn] = get(row, col);
+    @Override
+    public boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns) {
+        boolean[][] snapshot = new boolean[rows][columns];
+        long liveCells = liveCells();
+        if (liveCells == 0) return snapshot;
+        rows = Math.min(rows, this.rows - fromRow);
+        columns = Math.min(columns, this.cols - fromColumn);
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < columns; col++) {
+                boolean alive = snapshot[row][col] = get(row + fromRow, col + fromColumn);
+                if (alive && --liveCells == 0) {
+                    return snapshot;
+                }
             }
         }
         return snapshot;
-    }
-
-    @Override
-    public final boolean[][] snapshot() {
-        return snapshotWithoutBoundChecking(0, 0, rows, cols);
-    }
-
-    @Override
-    public final boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns) {
-        Objects.checkFromIndexSize(fromRow, rows, this.rows);
-        Objects.checkFromIndexSize(fromColumn, columns, this.cols);
-        return snapshotWithoutBoundChecking(fromRow, fromColumn, rows, columns);
     }
 
     @Override
@@ -70,7 +63,7 @@ public abstract class AbstractFiniteGrid implements Grid {
     }
 
     @Override
-    public final boolean hasCell(int row, int col) {
+    public final boolean exists(int row, int col) {
         return row >= 0 && row < rows && col >= 0 && col < cols;
     }
 

@@ -10,21 +10,11 @@ public interface Grid {
 
     int neighbors(int row, int col);
 
-    boolean[][] snapshot();
-
     boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns);
 
     void clear();
 
-    int getRows();
-
-    int getColumns();
-
-    long getSize();
-
     long liveCells();
-
-    boolean hasCell(int row, int col);
 
     void forEachAlive(CellOperation operation);
 

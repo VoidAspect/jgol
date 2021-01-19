@@ -25,13 +25,12 @@ public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
 
     @Override
     public boolean get(int row, int col) {
-        checkIndex(row, col);
-        return grid[++row] != null && grid[row].get(++col);
+        return exists(row, col) && grid[++row] != null && grid[row].get(++col);
     }
 
     @Override
     public void set(int row, int col, boolean state) {
-        checkIndex(row, col);
+        if (!exists(row, col)) return;
         BitSet cells;
         if ((cells = grid[++row]) == null) {
             cells = grid[row] = new BitSet(bits);
@@ -44,7 +43,7 @@ public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
 
     @Override
     public int neighbors(int row, int col) {
-        checkIndex(row, col);
+        if (!exists(row, col)) return 0;
         row++;
         col++;
         //@formatter:off
@@ -80,20 +79,23 @@ public final class BitVectorInMemoryGrid extends AbstractFiniteGrid {
     }
 
     @Override
-    protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
+    public boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns) {
         fromRow++;
         fromColumn++;
         int toRow = fromRow + rows;
         int toCol = fromColumn + columns;
 
-        boolean[][] snapshot = new boolean[rows][];
+        boolean[][] snapshot = new boolean[rows][columns];
+        long remaining = liveCells;
+        if (remaining == 0) return snapshot;
 
         for (int ri = fromRow; ri < toRow; ri++) {
-            boolean[] row = snapshot[ri - fromRow] = new boolean[columns];
+            boolean[] row = snapshot[ri - fromRow];
             BitSet cells;
             if ((cells = grid[ri]) == null || cells.isEmpty()) continue;
             for (int ci = cells.nextSetBit(fromColumn); ci < toCol && ci > 0; ci = cells.nextSetBit(ci + 1)) {
                 row[ci - fromColumn] = true;
+                if (--remaining == 0) return snapshot;
             }
         }
 

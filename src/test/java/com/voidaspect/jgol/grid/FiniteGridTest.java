@@ -9,7 +9,27 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public abstract class FiniteGridTest {
+public abstract class FiniteGridTest extends GridTest {
+
+    @Test
+    void shouldBeFinite() {
+        var grid = grid(3, 3);
+
+        assertTrue(grid.exists(0, 0));
+        assertTrue(grid.exists(0, 1));
+        assertTrue(grid.exists(0, 2));
+        assertTrue(grid.exists(1, 0));
+        assertTrue(grid.exists(1, 1));
+        assertTrue(grid.exists(1, 2));
+        assertTrue(grid.exists(2, 0));
+        assertTrue(grid.exists(2, 1));
+        assertTrue(grid.exists(2, 2));
+
+        assertFalse(grid.exists(-1, 0));
+        assertFalse(grid.exists(0, -1));
+        assertFalse(grid.exists(3, 1));
+        assertFalse(grid.exists(1, 3));
+    }
 
     @Test
     void shouldNotAllowInvalidGrids() {
@@ -31,59 +51,6 @@ public abstract class FiniteGridTest {
         assertEquals(4, grid.getRows());
         assertEquals(4, grid.getColumns());
         assertEquals(16, grid.getSize());
-    }
-
-    @Test
-    void shouldAccessGridByIndex() {
-        var grid = grid(new boolean[][]{
-                {false, false, true},
-                {false, false}
-        }, 3, 3);
-
-        assertFalse(grid.get(0, 0));
-        assertFalse(grid.get(0, 1));
-
-        assertTrue(grid.get(0, 2));
-
-        grid.set(0, 2, false);
-        assertFalse(grid.get(0, 2));
-
-        assertFalse(grid.get(1, 0));
-        assertFalse(grid.get(1, 1));
-        assertFalse(grid.get(1, 2));
-        assertFalse(grid.get(2, 0));
-        assertFalse(grid.get(2, 1));
-        assertFalse(grid.get(2, 2));
-
-        assertTrue(grid.hasCell(0, 0));
-        assertTrue(grid.hasCell(0, 1));
-        assertTrue(grid.hasCell(0, 2));
-        assertTrue(grid.hasCell(1, 0));
-        assertTrue(grid.hasCell(1, 1));
-        assertTrue(grid.hasCell(1, 2));
-        assertTrue(grid.hasCell(2, 0));
-        assertTrue(grid.hasCell(2, 1));
-        assertTrue(grid.hasCell(2, 2));
-
-        assertFalse(grid.hasCell(-1, 0));
-        assertFalse(grid.hasCell(0, -1));
-        assertFalse(grid.hasCell(3, 1));
-        assertFalse(grid.hasCell(1, 3));
-
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.set(-1, 0, true));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.set(0, -1, true));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.set(3, 1, true));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.set(1, 3, true));
-
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(-1, 0));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(0, -1));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(3, 1));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.get(1, 3));
-
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.neighbors(-1, 0));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.neighbors(0, -1));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.neighbors(3, 1));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid.neighbors(1, 3));
     }
 
     @Test
@@ -111,116 +78,20 @@ public abstract class FiniteGridTest {
         }, grid.snapshot());
     }
 
-    @Test
-    void shouldSnapshotRegion() {
-        boolean[][] initial = {
-                {false, false, false},
-                {false, true, false},
-                {false, false, false},
-        };
-
-        var grid = grid(initial, 3, 3);
-
-        assertArrayEquals(initial, grid.snapshot(0, 0, 3, 3));
-        assertArrayEquals(new boolean[][]{
-                {false, false, false},
-                {false, true, false},
-        }, grid.snapshot(0, 0, 2, 3));
-        assertArrayEquals(new boolean[][]{
-                {false, false},
-                {false, true},
-        }, grid.snapshot(0, 0, 2, 2));
-        assertArrayEquals(new boolean[][]{
-                {false, false},
-                {false, true},
-                {false, false}
-        }, grid.snapshot(0, 0, 3, 2));
-        assertArrayEquals(new boolean[][]{{false}}, grid.snapshot(2, 2, 1, 1));
-        assertArrayEquals(new boolean[0][], grid.snapshot(2, 2, 0, 0));
-
-        assertThrows(IndexOutOfBoundsException.class, () -> grid
-                .snapshot(-1, -1, 1, 1));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid
-                .snapshot(0, 0, 4, 1));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid
-                .snapshot(0, 0, 1, 4));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid
-                .snapshot(0, 0, -1, 3));
-        assertThrows(IndexOutOfBoundsException.class, () -> grid
-                .snapshot(0, 0, 3, -1));
+    @Override
+    protected FiniteGrid grid(boolean[][] initial) {
+        return grid(initial, initial.length, initial[0].length);
     }
 
-    @Test
-    void shouldClearGrid() {
-        var grid = grid(new boolean[][]{
-                {true, true},
-                {true, true},
-        }, 2, 2);
-        boolean[][] expected = {
-                {false, false},
-                {false, false},
-        };
-        grid.clear();
-        assertArrayEquals(expected, grid.snapshot());
-    }
+    protected abstract FiniteGrid grid(int rows, int cols);
 
-    @Test
-    void shouldIterateOverLiveCells() {
-        var grid = grid(new boolean[][] {
-                {true, false, true},
-                {false, false, false},
-                {true, true, true}
-        }, 3, 3);
+    protected abstract FiniteGrid grid(boolean[][] initial, int rows, int cols);
 
-        Map<Integer, Set<Integer>> alive = new HashMap<>();
-
-        grid.forEachAlive(((row, col) -> alive.compute(row, (key, value) -> {
-            if (value == null) value = new HashSet<>();
-            value.add(col);
-            return value;
-        })));
-
-        assertEquals(Map.of(
-                0, Set.of(0, 2),
-                2, Set.of(0, 1, 2)
-        ), alive);
-    }
-
-    @Test
-    void shouldReturnLiveCellAmount() {
-        var grid = grid(new boolean[][] {
-                {true, false, true},
-                {false, false, false},
-                {true, true, true}
-        }, 3, 3);
-
-        assertEquals(5, grid.liveCells());
-
-        grid.set(0, 0, false);
-        assertEquals(4, grid.liveCells());
-
-        grid.set(0, 0, false);
-        assertEquals(4, grid.liveCells());
-
-        grid.set(0, 1, true);
-        assertEquals(5, grid.liveCells());
-
-        grid.set(0, 1, true);
-        assertEquals(5, grid.liveCells());
-
-        grid.clear();
-        assertEquals(0, grid.liveCells());
-    }
-
-    protected abstract Grid grid(int rows, int cols);
-
-    protected abstract Grid grid(boolean[][] initial, int rows, int cols);
-
-    protected Grid testedGrid(int rows, int cols) {
+    protected FiniteGrid testedGrid(int rows, int cols) {
         return new NeighborCountingGrid(rows, cols);
     }
 
-    protected Grid testedGrid(boolean[][] initial, int rows, int cols) {
+    protected FiniteGrid testedGrid(boolean[][] initial, int rows, int cols) {
         return new PaddedInMemoryGrid(initial, rows, cols);
     }
 }

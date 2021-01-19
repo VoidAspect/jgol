@@ -45,7 +45,7 @@ class GameOfLifeTest {
                 {true, true}
         };
         int generations = Integer.MAX_VALUE;
-        var game = GameOfLife.builder(new HashGrid(initial, 20000, 20000)).build();
+        var game = GameOfLife.builder(new HashGrid(initial)).build();
         assertFalse(game.isFrozen());
         while (generations-- > 0) {
             game.progress();
@@ -71,8 +71,7 @@ class GameOfLifeTest {
 
     @Test
     void shouldProgressOnLargeEmptyGrid() {
-        int side = 20_000;
-        var grid = new HashGrid(side, side);
+        var grid = new HashGrid();
         var game = GameOfLife.builder(grid).build();
         game.progress();
     }
@@ -384,8 +383,7 @@ class GameOfLifeTest {
                 {0, 0, 1, 1, 1, 0},
                 {0, 0, 0, 0, 0, 0}
         };
-        int side = 100_000;
-        var game = game(initial, side, side);
+        var game = game(initial);
         game.progress(lpl);
         assertGame(step1, game);
         game.progress(lpl);
@@ -407,22 +405,14 @@ class GameOfLifeTest {
     }
 
     private static GameOfLife game(byte[][] grid) {
-        int rows = grid.length;
-        int columns = grid[0].length;
-        return game(grid, rows, columns);
-    }
-
-    private static GameOfLife game(byte[][] grid, int rows, int columns) {
-        boolean[][] b = new boolean[grid.length][];
+        boolean[][] initial = new boolean[grid.length][];
         for (int i = 0; i < grid.length; i++) {
-            boolean[] r = b[i] = new boolean[grid[i].length];
+            boolean[] r = initial[i] = new boolean[grid[i].length];
             for (int j = 0; j < grid[i].length; j++) {
                 r[j] = grid[i][j] != 0;
             }
         }
-        var inMemoryGrid = new NeighborCountingHashGrid(b, rows, columns);
-        assertEquals(rows, inMemoryGrid.getRows());
-        assertEquals(columns, inMemoryGrid.getColumns());
+        var inMemoryGrid = new NeighborCountingHashGrid(initial);
         var game = GameOfLife.builder(inMemoryGrid).build();
         assertGame(grid, game);
         return game;

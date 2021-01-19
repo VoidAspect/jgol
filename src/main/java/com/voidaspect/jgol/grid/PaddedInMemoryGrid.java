@@ -1,7 +1,5 @@
 package com.voidaspect.jgol.grid;
 
-import java.util.Arrays;
-
 public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
 
     private static final int PADDING = 1;
@@ -45,27 +43,13 @@ public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
     }
 
     @Override
-    protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
-        boolean[][] snapshot = new boolean[rows][];
-        fromColumn += PADDING;
-        fromRow += PADDING;
-        int toColumn = fromColumn + columns;
-        for (int i = 0; i < rows; i++) {
-            boolean[] row = grid[i + fromRow];
-            snapshot[i] = Arrays.copyOfRange(row, fromColumn, toColumn);
-        }
-        return snapshot;
-    }
-
-    @Override
     public boolean get(int row, int col) {
-        checkIndex(row, col);
-        return grid[PADDING + row][PADDING + col];
+        return exists(row, col) && grid[PADDING + row][PADDING + col];
     }
 
     @Override
     public void set(int row, int col, boolean state) {
-        checkIndex(row, col);
+        if (!exists(row, col)) return;
         row += PADDING;
         col += PADDING;
         if (grid[row][col] != state) {
@@ -76,7 +60,7 @@ public final class PaddedInMemoryGrid extends AbstractFiniteGrid {
 
     @Override
     public int neighbors(int row, int col) {
-        checkIndex(row, col);
+        if (!exists(row, col)) return 0;
         row += PADDING;
         col += PADDING;
         //@formatter:off

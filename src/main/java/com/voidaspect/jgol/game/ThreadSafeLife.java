@@ -1,8 +1,7 @@
 package com.voidaspect.jgol.game;
 
-import com.voidaspect.jgol.grid.AbstractFiniteGrid;
-import com.voidaspect.jgol.grid.cell.CellOperation;
 import com.voidaspect.jgol.grid.Grid;
+import com.voidaspect.jgol.grid.cell.CellOperation;
 import com.voidaspect.jgol.listener.CellListener;
 
 import java.util.concurrent.locks.StampedLock;
@@ -142,11 +141,7 @@ final class ThreadSafeLife extends AbstractLife {
     /**
      * Thread-safe view of a {@link Grid} object. Uses read-write locking.
      */
-    private final class ThreadSafeGrid extends AbstractFiniteGrid {
-
-        public ThreadSafeGrid() {
-            super(inner.getRows(), inner.getColumns());
-        }
+    private final class ThreadSafeGrid implements Grid {
 
         @Override
         public boolean get(int row, int col) {
@@ -218,7 +213,7 @@ final class ThreadSafeLife extends AbstractLife {
         }
 
         @Override
-        protected boolean[][] snapshotWithoutBoundChecking(int fromRow, int fromColumn, int rows, int columns) {
+        public boolean[][] snapshot(int fromRow, int fromColumn, int rows, int columns) {
             long stamp = gridLock.readLock();
             try {
                 return inner.snapshot(fromRow, fromColumn, rows, columns);

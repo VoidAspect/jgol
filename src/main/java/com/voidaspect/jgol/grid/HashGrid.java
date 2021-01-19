@@ -3,29 +3,26 @@ package com.voidaspect.jgol.grid;
 import com.voidaspect.jgol.grid.cell.CellOperation;
 import com.voidaspect.jgol.grid.cell.LinkedCellSet;
 
-public final class HashGrid extends AbstractFiniteGrid {
+public final class HashGrid extends AbstractGrid {
 
     private final LinkedCellSet cells;
 
-    public HashGrid(int rows, int cols) {
-        super(rows, cols);
+    public HashGrid() {
         this.cells = new LinkedCellSet();
     }
 
-    public HashGrid(boolean[][] grid, int rows, int columns) {
-        this(rows, columns);
+    public HashGrid(boolean[][] grid) {
+        this();
         fillGrid(grid);
     }
 
     @Override
     public boolean get(int row, int col) {
-        checkIndex(row, col);
         return cells.contains(row, col);
     }
 
     @Override
     public void set(int row, int col, boolean state) {
-        checkIndex(row, col);
         if (state) {
             cells.add(row, col);
         } else {
@@ -35,7 +32,6 @@ public final class HashGrid extends AbstractFiniteGrid {
 
     @Override
     public int neighbors(int row, int col) {
-        checkIndex(row, col);
         //@formatter:off
         int up    = row - 1;
         int down  = row + 1;
@@ -48,7 +44,7 @@ public final class HashGrid extends AbstractFiniteGrid {
     }
 
     private int value(int row, int col) {
-        return hasCell(row, col) && cells.contains(row, col) ? 1 : 0;
+        return cells.contains(row, col) ? 1 : 0;
     }
 
     @Override

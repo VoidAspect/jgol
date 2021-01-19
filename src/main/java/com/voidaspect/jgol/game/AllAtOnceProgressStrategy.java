@@ -30,8 +30,7 @@ final class AllAtOnceProgressStrategy extends AbstractProgressStrategy {
         NextGen(Grid grid, CellListener listener) {
             this.grid = grid;
             this.listener = listener;
-            long estimatedDeadNeighbors = Math.min(grid.liveCells() * 8, grid.getSize() - grid.liveCells());
-            this.visited = new CellSet((int) estimatedDeadNeighbors);
+            this.visited = new CellSet();
             this.spawned = new CellBag();
             this.died = new CellBag();
         }
@@ -70,13 +69,10 @@ final class AllAtOnceProgressStrategy extends AbstractProgressStrategy {
         }
 
         private void visit(int row, int col) {
-            // only evaluate existing dead cells that were not yet visited
-            if (!grid.hasCell(row, col) || grid.get(row, col)) return;
-            if (!visited.add(row, col)) return;
+            // only evaluate dead cells that were not yet visited
+            if (grid.get(row, col) || !visited.add(row, col)) return;
 
-            int neighbors = grid.neighbors(row, col);
-
-            if (neighbors == 3) {
+            if (grid.neighbors(row, col) == 3) {
                 // reproduction
                 willSpawn(row, col);
             }

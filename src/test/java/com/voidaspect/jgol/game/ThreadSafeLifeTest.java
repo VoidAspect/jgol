@@ -21,10 +21,6 @@ class ThreadSafeLifeTest {
 
     private static final Logger log = LoggerFactory.getLogger(ThreadSafeLifeTest.class);
 
-    private static final int DEFAULT_GRID_SIDE = 100;
-
-    public static final long DEFAULT_SIZE = (long) DEFAULT_GRID_SIDE * DEFAULT_GRID_SIDE;
-
     private ThreadSafeLife subject;
 
     private AbstractLife delegate;
@@ -34,9 +30,6 @@ class ThreadSafeLifeTest {
     @BeforeEach
     void setUp() {
         grid = mock(Grid.class);
-        when(grid.getColumns()).thenReturn(DEFAULT_GRID_SIDE);
-        when(grid.getRows()).thenReturn(DEFAULT_GRID_SIDE);
-        when(grid.getSize()).thenReturn(DEFAULT_SIZE);
         delegate = mock(AbstractLife.class);
         when(delegate.grid()).thenReturn(grid);
         subject = ThreadSafeLife.of(delegate);
@@ -174,13 +167,13 @@ class ThreadSafeLifeTest {
     static class ThreadSafeGridTest extends LifeTest.LifeGridTest {
 
         @Override
-        AbstractLife getGame(int rows, int cols) {
-            return ThreadSafeLife.of(super.getGame(rows, cols));
+        AbstractLife getGame() {
+            return ThreadSafeLife.of(super.getGame());
         }
 
         @Override
-        AbstractLife getGame(boolean[][] initial, int rows, int cols) {
-            return ThreadSafeLife.of(super.getGame(initial, rows, cols));
+        AbstractLife getGame(boolean[][] initial) {
+            return ThreadSafeLife.of(super.getGame(initial));
         }
     }
 }

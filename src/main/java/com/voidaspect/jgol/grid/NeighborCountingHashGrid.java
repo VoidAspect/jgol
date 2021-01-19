@@ -5,33 +5,29 @@ import com.voidaspect.jgol.grid.cell.Cells;
 import com.voidaspect.jgol.grid.cell.LinkedCellSet;
 import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
 
-public final class NeighborCountingHashGrid extends AbstractFiniteGrid {
+public final class NeighborCountingHashGrid extends AbstractGrid {
 
     private final LinkedCellSet cells;
 
     private final NeighborMap neighbors;
 
-    public NeighborCountingHashGrid(int rows, int cols) {
-        super(rows, cols);
+    public NeighborCountingHashGrid() {
         this.cells = new LinkedCellSet();
         this.neighbors = new NeighborMap();
     }
 
-    public NeighborCountingHashGrid(boolean[][] initial, int rows, int cols) {
-        this(rows, cols);
+    public NeighborCountingHashGrid(boolean[][] initial) {
+        this();
         fillGrid(initial);
     }
 
     @Override
     public boolean get(int row, int col) {
-        checkIndex(row, col);
         return cells.contains(row, col);
     }
 
     @Override
     public void set(int row, int col, boolean state) {
-        checkIndex(row, col);
-
         boolean modified;
         byte neighbor;
         if (state) {
@@ -58,7 +54,6 @@ public final class NeighborCountingHashGrid extends AbstractFiniteGrid {
 
     @Override
     public int neighbors(int row, int col) {
-        checkIndex(row, col);
         return neighbors.get(row, col);
     }
 
@@ -78,7 +73,7 @@ public final class NeighborCountingHashGrid extends AbstractFiniteGrid {
         cells.forEach(operation);
     }
 
-    private final class NeighborMap {
+    private static final class NeighborMap {
 
         final Long2ByteOpenHashMap mapping;
 
@@ -87,9 +82,7 @@ public final class NeighborCountingHashGrid extends AbstractFiniteGrid {
         }
 
         void add(int row, int col, byte neighbors) {
-            if (hasCell(row, col)) {
-                mapping.addTo(Cells.pack(row, col), neighbors);
-            }
+            mapping.addTo(Cells.pack(row, col), neighbors);
         }
 
         byte get(int row, int col) {

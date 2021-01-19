@@ -6,13 +6,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class GameOfLifeBuilderTest {
-
-    private static final int LARGE_GRID_ROWS = 100_000;
-
-    private static final int LARGE_GRID_COLUMNS = 200_000;
 
     private Grid grid;
 
@@ -35,8 +30,6 @@ class GameOfLifeBuilderTest {
 
     @Test
     void whenThreadSafeTrue_ShouldCreateThreadSafeLife() {
-        setupLargeGrid();
-
         var builder = new GameOfLifeBuilder(grid).setThreadSafe(true);
         assertTrue(builder.isThreadSafe());
 
@@ -48,10 +41,5 @@ class GameOfLifeBuilderTest {
         assertEquals(Life.class, builder.build().getClass());
     }
 
-    private void setupLargeGrid() {
-        when(grid.getRows()).thenReturn(LARGE_GRID_ROWS);
-        when(grid.getColumns()).thenReturn(LARGE_GRID_COLUMNS);
-        when(grid.getSize()).thenReturn((long) LARGE_GRID_ROWS * LARGE_GRID_COLUMNS);
-    }
 
 }
