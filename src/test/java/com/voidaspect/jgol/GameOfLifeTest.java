@@ -2,6 +2,7 @@ package com.voidaspect.jgol;
 
 import com.voidaspect.jgol.grid.BitVectorInMemoryGrid;
 import com.voidaspect.jgol.grid.HashGrid;
+import com.voidaspect.jgol.grid.NeighborCountingHashGrid;
 import com.voidaspect.jgol.listener.LoggingProgressListener;
 import com.voidaspect.jgol.listener.ProgressListener;
 import org.junit.jupiter.api.Test;
@@ -78,7 +79,7 @@ class GameOfLifeTest {
 
     @Test
     void shouldHandleLargeGrid() {
-        int side = 5000;
+        int side = 8000;
         int edge = side - 1;
         var grid = new BitVectorInMemoryGrid(side, side);
         var game = GameOfLife.builder(grid).build();
@@ -419,7 +420,7 @@ class GameOfLifeTest {
                 r[j] = grid[i][j] != 0;
             }
         }
-        var inMemoryGrid = new HashGrid(b, rows, columns);
+        var inMemoryGrid = new NeighborCountingHashGrid(b, rows, columns);
         assertEquals(rows, inMemoryGrid.getRows());
         assertEquals(columns, inMemoryGrid.getColumns());
         var game = GameOfLife.builder(inMemoryGrid).build();
