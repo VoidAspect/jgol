@@ -49,7 +49,6 @@ public final class NeighborCountingHashGrid extends AbstractGrid {
         neighbors.add(row,  right, neighbor);           /* this cell */           neighbors.add(row,  left, neighbor);
         neighbors.add(down, right, neighbor); neighbors.add(down, col, neighbor); neighbors.add(down, left, neighbor);
         //@formatter:on
-        
     }
 
     @Override
